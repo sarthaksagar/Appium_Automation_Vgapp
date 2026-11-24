@@ -1,0 +1,146 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.vgcares</groupId>
+  <artifactId>automation</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>VGCares Mobile Automation Framework</name>
+  <description>Enterprise Appium Mobile Automation Framework for Android Physical Device</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <suiteXmlFile>testng.xml</suiteXmlFile>
+
+    <!-- Dependency Versions -->
+    <appium.java.client.version>8.5.1</appium.java.client.version>
+    <selenium.version>4.13.0</selenium.version>
+    <testng.version>7.8.0</testng.version>
+    <extentreports.version>5.1.1</extentreports.version>
+    <jackson.version>2.15.3</jackson.version>
+    <log4j.version>2.20.0</log4j.version>
+    <slf4j.version>2.0.9</slf4j.version>
+    <commons.io.version>2.14.0</commons.io.version>
+    <surefire.version>3.1.2</surefire.version>
+    <compiler.version>3.11.0</compiler.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.seleniumhq.selenium</groupId>
+        <artifactId>selenium-bom</artifactId>
+        <version>${selenium.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Appium Java Client -->
+    <dependency>
+      <groupId>io.appium</groupId>
+      <artifactId>java-client</artifactId>
+      <version>${appium.java.client.version}</version>
+    </dependency>
+
+    <!-- Selenium Java -->
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-java</artifactId>
+      <version>${selenium.version}</version>
+    </dependency>
+
+    <!-- TestNG -->
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>${testng.version}</version>
+    </dependency>
+
+    <!-- ExtentReports 5 -->
+    <dependency>
+      <groupId>com.aventstack</groupId>
+      <artifactId>extentreports</artifactId>
+      <version>${extentreports.version}</version>
+    </dependency>
+
+    <!-- Jackson for JSON Test Data Parsing -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <!-- Logging: Log4j2 and SLF4J -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+    <!-- Apache Commons IO -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commons.io.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Compiler Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler.version}</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- Surefire Plugin for TestNG Suites -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <reuseForks>true</reuseForks>
+          <forkCount>1</forkCount>
+          <suiteXmlFiles>
+            <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
+          </suiteXmlFiles>
+          <properties>
+            <property>
+              <name>usedefaultlisteners</name>
+              <value>false</value>
+            </property>
+          </properties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

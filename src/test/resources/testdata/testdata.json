@@ -1,0 +1,14 @@
+{
+  "TC_ID_SIGNUP_001": {
+    "testCaseId": "TC_ID_SIGNUP-001",
+    "module": "Sign Up",
+    "priority": "High",
+    "type": "Positive",
+    "description": "Verify user can create account with valid details",
+    "fullName": "John Doe",
+    "email": "john.doe@email.com",
+    "password": "Test@1234",
+    "confirmPassword": "Test@1234",
+    "expectedResult": "Account is created successfully. User is navigated to dashboard/ verification screen. Success message is displayed."
+  }
+}
