@@ -1,9 +1,11 @@
 package com.vgcares.automation.utils;
 
+import com.vgcares.automation.config.ConfigManager;
 import com.vgcares.automation.constants.FrameworkConstants;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -19,7 +21,7 @@ public final class WaitUtils {
     }
 
     public static WebDriverWait getWait(AndroidDriver driver) {
-        return getWait(driver, FrameworkConstants.DEFAULT_EXPLICIT_WAIT);
+        return getWait(driver, ConfigManager.getInt("explicitWait", FrameworkConstants.DEFAULT_EXPLICIT_WAIT));
     }
 
     public static WebElement waitForVisibility(AndroidDriver driver, By locator) {
@@ -48,8 +50,9 @@ public final class WaitUtils {
 
     public static boolean isElementDisplayed(AndroidDriver driver, By locator, int timeoutSeconds) {
         try {
-            return waitForVisibility(driver, locator, timeoutSeconds).isDisplayed();
-        } catch (Exception e) {
+            waitForVisibility(driver, locator, timeoutSeconds);
+            return true;
+        } catch (TimeoutException e) {
             return false;
         }
     }

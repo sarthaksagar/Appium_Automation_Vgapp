@@ -1,5 +1,7 @@
 package com.vgcares.automation.constants;
 
+import com.vgcares.automation.config.ConfigManager;
+
 import java.io.File;
 
 public final class FrameworkConstants {
@@ -17,6 +19,8 @@ public final class FrameworkConstants {
     public static final String SCREENSHOTS_DIR = USER_DIR + File.separator + "screenshots";
     public static final String LOGS_DIR = USER_DIR + File.separator + "logs";
 
-    public static final int DEFAULT_EXPLICIT_WAIT = 8;
-    public static final int POLLING_INTERVAL_MILLIS = 200;
+    public static final int DEFAULT_EXPLICIT_WAIT = ConfigManager.getInt("explicit.wait.seconds", 20);
+    public static final int POLLING_INTERVAL_MILLIS = ConfigManager.getInt("polling.interval.ms", 250);
+    public static final int ACTION_DELAY_MILLIS = ConfigManager.getInt("action.delay.ms", 1000);
+    public static final boolean IS_LEARNING_MODE = "learning".equalsIgnoreCase(ConfigManager.get("execution.mode", "learning"));
 }

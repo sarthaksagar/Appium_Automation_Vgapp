@@ -2,6 +2,9 @@ package com.vgcares.automation.pages;
 
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+
+import java.util.List;
 
 /**
  * Page Object for the Login screen of VGCares Global Doctor (Flutter app).
@@ -22,24 +25,17 @@ public class LoginPage extends BasePage {
 
     // ── Tab Selectors ──────────────────────────────────────────────────────
     private final By loginTab = By.xpath(
-            "//*[contains(@content-desc,'Login') or contains(@text,'Login')]");
-    private final By signUpTab = By.xpath(
-            "//*[contains(@content-desc,'Sign Up') or contains(@text,'Sign Up')]");
+            "//*[@clickable='true' and starts-with(@content-desc,'Login\nTab ')]");
 
-    // ── Form Fields ────────────────────────────────────────────────────────
+    // Form Fields ────────────────────────────────────────────────────────
     // Index-based: works reliably for Flutter apps under UiAutomator2
     private final By emailOrPhoneField = By.xpath("(//android.widget.EditText)[1]");
     private final By passwordField = By.xpath("(//android.widget.EditText)[2]");
 
     // ── Login Button ───────────────────────────────────────────────────────
     private final By loginButton = By.xpath(
-            "//*[contains(@content-desc,'Login') and not(contains(@content-desc,'Tab'))" +
-                    " and not(contains(@content-desc,'Sign Up'))]" +
-                    " | //android.widget.Button[contains(@text,'Login') or contains(@text,'Sign In')]");
-
-    // A simpler fallback for the Login action button specifically:
-    private final By loginActionButton = By.xpath(
-            "(//*[contains(@content-desc,'Login') or contains(@text,'Login')])[last()]");
+            "//*[@clickable='true' and (@content-desc='Login' or @text='Login'"
+                    + " or @content-desc='Sign In' or @text='Sign In')]");
 
     // ── Forgot Password ────────────────────────────────────────────────────
     private final By forgotPasswordLink = By.xpath(
@@ -61,18 +57,17 @@ public class LoginPage extends BasePage {
 
     public LoginPage openLoginTab() {
         log.info("Switching to Login tab");
-        // Only click tab if not already on Login (avoid double-click)
-        if (!isElementDisplayed(emailOrPhoneField, 2)) {
+        List<WebElement> tabs = findElements(loginTab);
+        if (!tabs.isEmpty() && !"true".equals(tabs.get(0).getAttribute("selected"))) {
             click(loginTab);
-            waitForVisibility(emailOrPhoneField, 10);
         }
+        waitForVisibility(loginButton);
         return this;
     }
 
     // ── Field Interactions ─────────────────────────────────────────────────
 
     public LoginPage enterEmailOrPhone(String credential) {
-        log.info("Entering login credential: {}", credential);
         clearAndSendKeys(emailOrPhoneField, credential);
         return this;
     }
@@ -86,12 +81,7 @@ public class LoginPage extends BasePage {
     public LoginPage clickLogin() {
         log.info("Clicking Login button");
         hideKeyboard();
-        // Try the specific login action button
-        if (isElementDisplayed(loginActionButton, 3)) {
-            click(loginActionButton);
-        } else {
-            click(loginButton);
-        }
+        click(loginButton);
         return this;
     }
 
@@ -118,7 +108,6 @@ public class LoginPage extends BasePage {
      * Login with a live dynamic account and return the resulting HomePage.
      */
     public HomePage loginWithDynamicAccount(String email, String password) {
-        log.info("Logging in with dynamic account: {}", email);
         login(email, password);
         return new HomePage(driver);
     }
@@ -127,7 +116,6 @@ public class LoginPage extends BasePage {
      * Alias used by DoctorLoginTest — logs in as a static doctor credential.
      */
     public HomePage loginAsDoctor(String email, String password) {
-        log.info("Doctor login: {}", email);
         login(email, password);
         return new HomePage(driver);
     }
@@ -138,8 +126,12 @@ public class LoginPage extends BasePage {
         return isElementDisplayed(loginTab, 10);
     }
 
+    public boolean areCredentialFieldsDisplayed() {
+        return isElementDisplayed(emailOrPhoneField) && isElementDisplayed(passwordField);
+    }
+
     public boolean isLoginButtonDisplayed() {
-        return isElementDisplayed(loginActionButton, 8) || isElementDisplayed(loginButton, 8);
+        return isElementDisplayed(loginButton, 8);
     }
 
     public boolean isForgotPasswordDisplayed() {

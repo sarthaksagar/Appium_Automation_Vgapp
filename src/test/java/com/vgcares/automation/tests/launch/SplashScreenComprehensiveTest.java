@@ -1,9 +1,7 @@
 package com.vgcares.automation.tests.launch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.LaunchPage;
-import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -24,7 +22,7 @@ public class SplashScreenComprehensiveTest extends BaseTest {
 
     private LaunchPage launchPage;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupSplashTest() {
         launchPage = new LaunchPage(driver);
     }

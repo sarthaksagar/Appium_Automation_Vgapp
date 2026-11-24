@@ -5,9 +5,10 @@ import io.appium.java_client.android.AndroidDriver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.List;
 
@@ -40,13 +41,14 @@ public abstract class BasePage {
         acceptPermissionIfPresent();
         try {
             waitForClickable(locator).click();
-        } catch (Exception e) {
+        } catch (ElementClickInterceptedException | TimeoutException e) {
             if (acceptPermissionIfPresent()) {
                 waitForClickable(locator).click();
             } else {
                 throw e;
             }
         }
+        applyDemonstrationDelay();
     }
 
     protected void sendKeys(By locator, String text) {
@@ -55,6 +57,7 @@ public abstract class BasePage {
         element.click();
         element.clear();
         element.sendKeys(text);
+        applyDemonstrationDelay();
     }
 
     protected void clearAndSendKeys(By locator, String text) {
@@ -64,6 +67,21 @@ public abstract class BasePage {
         if (text != null && !text.isEmpty()) {
             element.sendKeys(text);
         }
+        applyDemonstrationDelay();
+    }
+
+    /**
+     * Centrally applies a demonstration delay when running in LEARNING MODE.
+     * Allows beginners to observe screen transitions and UI interactions clearly on the physical device.
+     */
+    protected void applyDemonstrationDelay() {
+        if (com.vgcares.automation.constants.FrameworkConstants.IS_LEARNING_MODE) {
+            try {
+                Thread.sleep(com.vgcares.automation.constants.FrameworkConstants.ACTION_DELAY_MILLIS);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     protected String getText(By locator) {
@@ -72,7 +90,6 @@ public abstract class BasePage {
         if (text == null || text.trim().isEmpty()) {
             text = element.getAttribute("content-desc");
         }
-        log.debug("Read text '{}' from element located by: {}", text, locator);
         return text != null ? text.trim() : "";
     }
 
@@ -97,18 +114,16 @@ public abstract class BasePage {
     }
 
     public void hideKeyboard() {
-        try {
+        if (driver.isKeyboardShown()) {
             driver.hideKeyboard();
-        } catch (Exception ignored) {
-            // Keyboard may not be open
         }
     }
 
     // ── System Permission Dialog Handler (e.g. Android 13 POST_NOTIFICATIONS) ──
     private static final By PERMISSION_ALLOW_BUTTON = By.xpath(
-        "//*[contains(@resource-id, 'permission_allow_button') or contains(@resource-id, 'permission_allow_foreground_only_button') " +
-        "or @text='Allow' or @text='ALLOW' or @content-desc='Allow' or @content-desc='ALLOW' " +
-        "or (contains(@resource-id, 'button1') and (@text='ALLOW' or @text='Allow'))]");
+        "//*[contains(@resource-id, 'permissioncontroller:id/permission_allow_button')"
+        + " or contains(@resource-id, 'permissioncontroller:id/permission_allow_foreground_only_button')"
+        + " or contains(@resource-id, 'packageinstaller:id/permission_allow_button')]");
 
     public boolean acceptPermissionIfPresent() {
         try {
@@ -121,7 +136,7 @@ public abstract class BasePage {
                     return true;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (StaleElementReferenceException ignored) {
             // Permission dialog not present or already handled
         }
         return false;

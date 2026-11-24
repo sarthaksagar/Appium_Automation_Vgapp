@@ -1,8 +1,8 @@
 package com.vgcares.automation.tests.auth;
 
 import com.vgcares.automation.base.BaseTest;
+import com.vgcares.automation.testdata.QaCredentials;
 import com.vgcares.automation.pages.ForgotPasswordPage;
-import com.vgcares.automation.pages.LaunchPage;
 import com.vgcares.automation.pages.LoginPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -20,12 +20,9 @@ public class ForgotPasswordTest extends BaseTest {
 
     private ForgotPasswordPage fpPage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void navigateToForgotPassword() {
-        LaunchPage lp = new LaunchPage(getDriver());
-        lp.passOnboardingIfPresent();
-        LoginPage loginPage = new LoginPage(getDriver());
-        loginPage.openLoginTab();
+        LoginPage loginPage = openFreshLogin();
         loginPage.clickForgotPassword();
         fpPage = new ForgotPasswordPage(getDriver());
     }
@@ -51,7 +48,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"smoke", "regression"}, priority = 2)
     public void testSubmitValidEmailForPasswordReset() {
         log.info("Executing TC_ID_FP-002 & TC_ID_FP-033: Submit valid email for password reset");
-        fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+        fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
 
         boolean resetSent = fpPage.isResetLinkSentConfirmationDisplayed()
                             || fpPage.isSuccessToastDisplayed()
@@ -69,7 +66,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"regression"}, priority = 3)
     public void testResetLinkSentConfirmationScreen() {
         log.info("Executing TC_ID_FP-003: Confirmation screen");
-        fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+        fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
 
         boolean onConfirmation = fpPage.isResetLinkSentConfirmationDisplayed()
                                  || fpPage.isResendEmailLinkDisplayed()
@@ -86,7 +83,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"regression"}, priority = 20)
     public void testResendConfirmationEmailLink() {
         log.info("Executing TC_ID_FP-020: Resend email link");
-        fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+        fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
         if (fpPage.isResendEmailLinkDisplayed()) {
             fpPage.clickResendEmail();
             boolean toastOrConfirm = fpPage.isSuccessToastDisplayed()
@@ -114,7 +111,7 @@ public class ForgotPasswordTest extends BaseTest {
                 "TC_ID_FP-021: 'Go to Sign In' should navigate to Login screen.");
         } else {
             log.info("TC_ID_FP-021: Go to Sign In not visible from initial screen – checking after submit.");
-            fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+            fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
             if (fpPage.isGoToSignInLinkDisplayed()) {
                 fpPage.clickGoToSignIn();
                 Assert.assertNotNull(getDriver().getPageSource(),
@@ -195,7 +192,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"regression"}, priority = 45)
     public void testContinueButtonLoadingState() {
         log.info("Executing TC_ID_FP-045: Continue button loading state");
-        fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+        fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
         // After tapping, the button should respond – verify app stays stable
         Assert.assertNotNull(getDriver().getCurrentPackage(),
             "TC_ID_FP-045: App should remain stable during 'Continue' submission.");
@@ -233,7 +230,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"regression"}, priority = 52)
     public void testRapidTappingContinueDoesNotDuplicate() {
         log.info("Executing TC_ID_FP-052: Rapid Continue tapping");
-        fpPage.enterEmail("harshadalolage24@gmail.com");
+        fpPage.enterEmail(QaCredentials.resetEmail());
         fpPage.clickContinue();
         try { Thread.sleep(100); } catch (InterruptedException ignored) {}
         // Check app stability
@@ -250,7 +247,7 @@ public class ForgotPasswordTest extends BaseTest {
         log.info("Executing TC_ID_FP-055: Continue button enabled/disabled state");
         // With empty field, button should ideally be disabled
         boolean continuePresentWhenEmpty = fpPage.isContinueButtonDisplayed();
-        fpPage.enterEmail("harshadalolage24@gmail.com");
+        fpPage.enterEmail(QaCredentials.resetEmail());
         boolean continuePresentWithEmail = fpPage.isContinueButtonDisplayed();
         Assert.assertTrue(continuePresentWithEmail,
             "TC_ID_FP-055: Continue button should be present when valid email is typed.");
@@ -289,7 +286,7 @@ public class ForgotPasswordTest extends BaseTest {
           groups = {"regression"}, priority = 61)
     public void testConfirmationScreenLayout() {
         log.info("Executing TC_ID_FP-061: Confirmation screen layout");
-        fpPage.enterEmail("harshadalolage24@gmail.com").clickContinue();
+        fpPage.enterEmail(QaCredentials.resetEmail()).clickContinue();
         boolean confirmVisible = fpPage.isResetLinkSentConfirmationDisplayed()
                                  || getDriver().getPageSource().contains("sent")
                                  || getDriver().getPageSource().contains("Reset");

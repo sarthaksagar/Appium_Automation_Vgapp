@@ -1,89 +1,60 @@
 package com.vgcares.automation.config;
 
-import com.vgcares.automation.constants.FrameworkConstants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.util.Locale;
 import java.util.Properties;
 
 public final class ConfigManager {
-
-    private static final Logger log = LogManager.getLogger(ConfigManager.class);
-    private static final Properties properties = new Properties();
-
-    static {
-        loadProperties();
-    }
+    private static final Properties PROPERTIES = loadProperties();
 
     private ConfigManager() {}
 
-    private static void loadProperties() {
-        try {
-            // First attempt: via ClassLoader
-            InputStream stream = ConfigManager.class.getClassLoader().getResourceAsStream("config.properties");
-            if (stream != null) {
-                properties.load(stream);
-                log.info("Loaded config.properties from classpath.");
-            } else {
-                // Fallback attempt: filesystem path
-                try (FileInputStream fis = new FileInputStream(FrameworkConstants.CONFIG_FILE_PATH)) {
-                    properties.load(fis);
-                    log.info("Loaded config.properties from path: {}", FrameworkConstants.CONFIG_FILE_PATH);
-                }
+    private static Properties loadProperties() {
+        try (InputStream stream = ConfigManager.class.getResourceAsStream("/config.properties")) {
+            if (stream == null) {
+                throw new IllegalStateException("Missing framework resource config.properties");
             }
-        } catch (Exception e) {
-            log.error("Failed to load config.properties: {}", e.getMessage(), e);
+            Properties properties = new Properties();
+            properties.load(stream);
+            return properties;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Unable to read config.properties", e);
         }
     }
 
-    /**
-     * Retrieves property with hierarchy: System Property > Environment Variable > config.properties.
-     */
-    public static String get(String key) {
-        String sysProp = System.getProperty(key);
-        if (sysProp != null && !sysProp.trim().isEmpty()) {
-            return sysProp.trim();
-        }
-
-        String envProp = System.getenv(key);
-        if (envProp != null && !envProp.trim().isEmpty()) {
-            return envProp.trim();
-        }
-
-        String propValue = properties.getProperty(key);
-        if (propValue != null) {
-            return propValue.trim();
-        }
-
-        log.warn("Property '{}' not found in config or environment variables.", key);
-        return "";
-    }
-
+    /** System property, VGCARES_ environment variable, legacy environment variable, then resource. */
     public static String get(String key, String defaultValue) {
-        String value = get(key);
-        return (value == null || value.trim().isEmpty()) ? defaultValue : value;
+        String envKey = "VGCARES_" + key.replaceAll("([a-z0-9])([A-Z])", "$1_$2")
+                .toUpperCase(Locale.ROOT);
+        for (String value : new String[] {System.getProperty(key), System.getenv(envKey),
+                System.getenv(key), PROPERTIES.getProperty(key)}) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return defaultValue;
     }
 
     public static int getInt(String key, int defaultValue) {
-        String value = get(key);
-        if (value == null || value.trim().isEmpty()) {
-            return defaultValue;
-        }
+        String value = get(key, Integer.toString(defaultValue));
         try {
-            return Integer.parseInt(value);
+            int number = Integer.parseInt(value);
+            if (number > 0) {
+                return number;
+            }
         } catch (NumberFormatException e) {
-            log.warn("Property '{}' with value '{}' is not a valid integer. Using default {}.", key, value, defaultValue);
-            return defaultValue;
+            throw new IllegalArgumentException(key + " must be a positive integer", e);
         }
+        throw new IllegalArgumentException(key + " must be a positive integer");
     }
 
     public static boolean getBoolean(String key, boolean defaultValue) {
-        String value = get(key);
-        if (value == null || value.trim().isEmpty()) {
-            return defaultValue;
+        String value = get(key, Boolean.toString(defaultValue));
+        if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+            return Boolean.parseBoolean(value);
         }
-        return Boolean.parseBoolean(value);
+        throw new IllegalArgumentException(key + " must be true or false");
     }
 }

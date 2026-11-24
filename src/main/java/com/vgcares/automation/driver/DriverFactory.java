@@ -2,91 +2,84 @@ package com.vgcares.automation.driver;
 
 import com.vgcares.automation.config.ConfigManager;
 import com.vgcares.automation.utils.DeviceUtils;
+import com.vgcares.automation.utils.DeviceUtils.AndroidDevice;
+import io.appium.java_client.AppiumClientConfig;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.time.Duration;
+import java.util.function.BiConsumer;
 
 public final class DriverFactory {
-
     private static final Logger log = LogManager.getLogger(DriverFactory.class);
 
     private DriverFactory() {}
 
     public static AndroidDriver createDriver() {
-        UiAutomator2Options options = new UiAutomator2Options();
+        return createDriver(AppiumStatus::requireReady);
+    }
 
-        // 1. Resolve Physical Device UDID
-        String configuredUdid = ConfigManager.get("udid", "auto");
-        String finalUdid;
-        if ("auto".equalsIgnoreCase(configuredUdid)) {
-            finalUdid = DeviceUtils.getFirstConnectedDeviceUdid();
-            if (finalUdid == null) {
-                // Fallback to known physical device if auto-detection query had latency
-                finalUdid = "GIPV9HBMLBHITO5H";
-                log.info("Using fallback physical device UDID: {}", finalUdid);
-            }
-        } else {
-            finalUdid = configuredUdid;
+    static AndroidDriver createDriver(BiConsumer<URI, Duration> requireServer) {
+        URI server = AppiumStatus.serverUri(ConfigManager.get("appiumServerUrl", LocalAppiumServer.DEFAULT_URL.toString()));
+        String appPackage = ConfigManager.get("appPackage", "");
+        String appActivity = ConfigManager.get("appActivity", "");
+        if (!appPackage.matches("[A-Za-z][\\w]*(?:\\.[A-Za-z][\\w]*)+")
+                || (!appActivity.isEmpty() && !appActivity.matches("\\.?[A-Za-z_$][\\w.$]*"))) {
+            throw new MobileInfrastructureException("Driver configuration", "Invalid appPackage or appActivity.");
+        }
+        if (!"Android".equalsIgnoreCase(ConfigManager.get("platformName", "Android"))
+                || !"UiAutomator2".equalsIgnoreCase(ConfigManager.get("automationName", "UiAutomator2"))) {
+            throw new MobileInfrastructureException("Driver configuration", "This suite requires Android and UiAutomator2.");
+        }
+        if (!ConfigManager.getBoolean("noReset", true) || ConfigManager.getBoolean("fullReset", false)) {
+            throw new MobileInfrastructureException("Driver configuration", "Physical device runs require noReset=true and fullReset=false.");
         }
 
-        options.setPlatformName(ConfigManager.get("platformName", "Android"));
-        options.setAutomationName(ConfigManager.get("automationName", "UiAutomator2"));
-        options.setUdid(finalUdid);
-        options.setDeviceName(ConfigManager.get("deviceName", "Real_Android_Device"));
+        requireServer.accept(server, timeout("appiumHealthTimeout", 5));
+        AndroidDevice device = DeviceUtils.requirePhysicalDevice(ConfigManager.get("udid", "auto"), appPackage, appActivity);
+        UiAutomator2Options options = capabilities(device, appPackage);
+        var client = AppiumClientConfig.defaultConfig().baseUri(server)
+                .connectionTimeout(timeout("driverConnectTimeout", 10))
+                .readTimeout(timeout("driverReadTimeout", 180));
 
-        // Platform version
-        String platformVersion = ConfigManager.get("platformVersion", "");
-        if (platformVersion.isEmpty()) {
-            platformVersion = DeviceUtils.getDeviceReleaseVersion(finalUdid);
-        }
-        options.setPlatformVersion(platformVersion);
-
-        // Application Under Test
-        String appPkg = ConfigManager.get("appPackage", "com.vg.vgcaresglobal.qa");
-        String appAct = ConfigManager.get("appActivity", "com.vg.vgcaresglobal.MainActivity");
-        options.setAppPackage(appPkg);
-        options.setAppActivity(appAct);
-        options.setAppWaitActivity("com.vg.vgcaresglobal.*,*.permission.ui.GrantPermissionsActivity");
-        options.setAppWaitPackage(appPkg + ",com.android.permissioncontroller,"
-            + "com.google.android.permissioncontroller,com.android.packageinstaller");
-        options.setAppWaitDuration(Duration.ofSeconds(20));
-
-        // Real Physical Device Settings
-        options.setNoReset(ConfigManager.getBoolean("noReset", true));
-        options.setFullReset(ConfigManager.getBoolean("fullReset", false));
-        options.setAutoGrantPermissions(true);
-
-        // Xiaomi / Redmi MIUI Stability Settings
-        options.setCapability("waitForQuiescence", false);
-        options.setCapability("ignoreHiddenApiPolicyError", true);
-
-        int installTimeout    = ConfigManager.getInt("driverInstallTimeout", 60);
-        int launchTimeout     = ConfigManager.getInt("driverLaunchTimeout",  60);
-        int newCommandTimeout = ConfigManager.getInt("newCommandTimeout",     60);
-
-        options.setUiautomator2ServerInstallTimeout(Duration.ofSeconds(installTimeout));
-        options.setUiautomator2ServerLaunchTimeout(Duration.ofSeconds(launchTimeout));
-        options.setNewCommandTimeout(Duration.ofSeconds(newCommandTimeout));
-
-        String serverUrlStr = ConfigManager.get("appiumServerUrl", "http://127.0.0.1:4723/");
-        log.info("Initializing AndroidDriver session for physical device [{}] on Appium server [{}]", finalUdid, serverUrlStr);
-
+        log.info("Starting UiAutomator2 on {} (Android {}) at {}", device.model(), device.release(), server);
         try {
-            URL serverUrl = new URL(serverUrlStr);
-            AndroidDriver driver = new AndroidDriver(serverUrl, options);
-            log.info("AndroidDriver initialized successfully. Session ID: {}", driver.getSessionId());
-            return driver;
-        } catch (MalformedURLException e) {
-            log.error("Invalid Appium server URL: {}", serverUrlStr, e);
-            throw new RuntimeException("Malformed Appium Server URL: " + serverUrlStr, e);
-        } catch (Exception e) {
-            log.error("Failed to initialize AndroidDriver on real device [{}]: {}", finalUdid, e.getMessage(), e);
-            throw new RuntimeException("Could not create AndroidDriver session on device: " + finalUdid, e);
+            return new AndroidDriver(client, options);
+        } catch (RuntimeException e) {
+            throw new MobileInfrastructureException("Driver session",
+                    "Could not create a UiAutomator2 session at " + server
+                            + ". Check the Appium server log for the session startup error.", e);
         }
+    }
+
+    static UiAutomator2Options capabilities(AndroidDevice device, String appPackage) {
+        UiAutomator2Options options = new UiAutomator2Options()
+                .setUdid(device.udid())
+                .setDeviceName(device.model())
+                .setPlatformVersion(device.release())
+                .setAppPackage(appPackage)
+                .setAppActivity(device.launchActivity())
+                .setAppWaitDuration(timeout("appWaitTimeout", 20))
+                .setNoReset(true)
+                .setFullReset(false)
+                .setUiautomator2ServerInstallTimeout(timeout("driverInstallTimeout", 60))
+                .setUiautomator2ServerLaunchTimeout(timeout("driverLaunchTimeout", 60))
+                .setNewCommandTimeout(timeout("newCommandTimeout", 300));
+        options.setAppWaitPackage(appPackage + ",com.android.permissioncontroller,"
+                + "com.google.android.permissioncontroller,com.android.packageinstaller");
+        options.setAppWaitActivity(device.launchActivity() + ",*.permission.ui.GrantPermissionsActivity");
+        options.setCapability("appium:skipUnlock", true);
+        options.setCapability("appium:forceAppLaunch", true);
+        options.setCapability("appium:ignoreHiddenApiPolicyError", true);
+        options.setCapability("appium:settings[waitForIdleTimeout]",
+                ConfigManager.getInt("uiautomator2IdleTimeoutMillis", 1000));
+        return options;
+    }
+
+    private static Duration timeout(String key, int defaultSeconds) {
+        return Duration.ofSeconds(ConfigManager.getInt(key, defaultSeconds));
     }
 }

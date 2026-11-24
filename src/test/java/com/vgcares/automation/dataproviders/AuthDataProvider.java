@@ -208,31 +208,6 @@ public final class AuthDataProvider {
         };
     }
 
-    // ── Doctor Valid Login Credentials & Profile Data ─────────────────────
-    @DataProvider(name = "doctorValidLoginData")
-    public static Object[][] getDoctorValidLoginData() {
-        JsonNode root = JsonUtils.readJsonTree(FrameworkConstants.TEST_DATA_JSON_PATH);
-        if (root != null && root.has("doctorUser")) {
-            JsonNode doc = root.get("doctorUser");
-            return new Object[][] {{
-                doc.path("fullName").asText(),
-                doc.path("email").asText(),
-                doc.path("password").asText(),
-                doc.path("displayName").asText(),
-                doc.path("role").asText(),
-                doc.path("specialization").asText()
-            }};
-        }
-        return new Object[][] {{
-            "Dr. Prateek Aatmaram Shinde",
-            "doctor.prateek@vgcares.com",
-            "Doctor@12345",
-            "Prateek",
-            "Doctor",
-            "Dentistry"
-        }};
-    }
-
     // ── Doctor Negative Login Scenarios (Data-driven) ──────────────────────
     @DataProvider(name = "doctorNegativeLoginData")
     public static Object[][] getDoctorNegativeLoginData() {
@@ -251,10 +226,10 @@ public final class AuthDataProvider {
             return data;
         }
         return new Object[][] {
-            {"TC_ID_DOC_LOG-001", "", "Doctor@12345", "Empty email"},
-            {"TC_ID_DOC_LOG-002", "doctor.prateek@vgcares.com", "", "Empty password"},
+            {"TC_ID_DOC_LOG-001", "", "Fixture-Password9!", "Empty email"},
+            {"TC_ID_DOC_LOG-002", "unregistered-doctor@example.invalid", "", "Empty password"},
             {"TC_ID_DOC_LOG-003", "invalid.doctor@vgcares.com", "WrongPassword@123", "Non-existent account"},
-            {"TC_ID_DOC_LOG-004", "doctor.prateek", "Doctor@12345", "Malformed email without @"}
+            {"TC_ID_DOC_LOG-004", "doctor.prateek", "Fixture-Password9!", "Malformed email without @"}
         };
     }
 
@@ -361,19 +336,4 @@ public final class AuthDataProvider {
         };
     }
 
-    // ── Dynamic Live Active User Data ─────────────────────────────────────
-    @DataProvider(name = "dynamicActiveUserData")
-    public static Object[][] getDynamicActiveUserData() {
-        JsonNode root = JsonUtils.readJsonTree(FrameworkConstants.TEST_DATA_JSON_PATH);
-        if (root != null && root.has("dynamicActiveUser")) {
-            JsonNode d = root.get("dynamicActiveUser");
-            return new Object[][] {{
-                d.path("email").asText(),
-                d.path("password").asText(),
-                d.path("role").asText(),
-                d.path("description").asText()
-            }};
-        }
-        return new Object[][] {{"virajd@techvishwaguru.com", "Admin@123", "Doctor", "Dynamic active live account"}};
-    }
 }

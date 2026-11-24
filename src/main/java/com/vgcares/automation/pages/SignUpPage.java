@@ -25,7 +25,7 @@ public class SignUpPage extends BasePage {
     // ── Tab Selectors ──────────────────────────────────────────────────────
     // Flutter renders tabs as android.view.View with content-desc from Semantics
     private final By signUpTab = By.xpath(
-        "//*[contains(@content-desc,'Sign Up') or contains(@text,'Sign Up')]");
+        "//*[@clickable='true' and starts-with(@content-desc,'Sign Up\nTab ')]");
     private final By loginTab  = By.xpath(
         "//*[contains(@content-desc,'Login') or contains(@text,'Login')]");
 
@@ -100,8 +100,10 @@ public class SignUpPage extends BasePage {
 
     public SignUpPage openSignUpTab() {
         log.info("Opening Sign Up tab");
-        click(signUpTab);
-        // Wait for first EditText (Full Name) to be visible
+        if (!"true".equals(waitForVisibility(signUpTab).getAttribute("selected"))) {
+            click(signUpTab);
+        }
+        waitForVisibility(createAccountButton);
         waitForVisibility(fullNameField, 10);
         return this;
     }
@@ -114,13 +116,11 @@ public class SignUpPage extends BasePage {
     // ── Field Interactions ──────────────────────────────────────────────────
 
     public SignUpPage enterFullName(String fullName) {
-        log.info("Entering Full Name: {}", fullName);
         clearAndSendKeys(fullNameField, fullName);
         return this;
     }
 
     public SignUpPage enterEmail(String email) {
-        log.info("Entering Email: {}", email);
         clearAndSendKeys(emailField, email);
         return this;
     }

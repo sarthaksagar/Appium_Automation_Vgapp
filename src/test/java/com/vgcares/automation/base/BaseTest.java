@@ -1,71 +1,104 @@
 package com.vgcares.automation.base;
 
-import com.vgcares.automation.driver.DriverFactory;
 import com.vgcares.automation.driver.DriverManager;
+import com.vgcares.automation.driver.MobileInfrastructureException;
 import com.vgcares.automation.listeners.TestListener;
+import com.vgcares.automation.config.ConfigManager;
+import com.vgcares.automation.pages.HomePage;
+import com.vgcares.automation.pages.LaunchPage;
+import com.vgcares.automation.pages.LoginPage;
+import com.vgcares.automation.testdata.QaCredentials;
 import io.appium.java_client.android.AndroidDriver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.testng.annotations.AfterClass;
+import org.openqa.selenium.TimeoutException;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 
-/**
- * BaseTest — class-level driver lifecycle.
- *
- * <p><b>Why @BeforeClass / @AfterClass?</b>
- * Using {@code @BeforeMethod} / {@code @AfterMethod} restarts the Appium session
- * (and re-launches the app) for EVERY single test method — adding 15–25 seconds
- * overhead per test.  With class-level lifecycle one session serves all test
- * methods inside a class, reducing total run time by 70-80 %.
- *
- * <p>Test classes that need a fresh session for a specific method can call
- * {@code DriverManager.quitDriver()} + {@code driver = DriverFactory.createDriver()}
- * inside that method directly.
- */
 @Listeners(TestListener.class)
 public abstract class BaseTest {
+    public static final String SUITE_SETUP_FAILURE = BaseTest.class.getName() + ".suiteSetupFailure";
 
     protected final Logger log = LogManager.getLogger(getClass());
     protected AndroidDriver driver;
 
-    @BeforeClass(alwaysRun = true)
-    public void setUp() {
-        log.info(">>> [{}] Initializing Driver Session <<<", getClass().getSimpleName());
+    @BeforeSuite(alwaysRun = true)
+    public final void startMobileSuite(ITestContext context) {
         try {
-            if (DriverManager.hasActiveSession()) {
-                driver = DriverManager.getDriver();
-                log.info("Reusing active AndroidDriver session [{}] for {}.", driver.getSessionId(), getClass().getSimpleName());
-            } else {
-                driver = DriverFactory.createDriver();
-                DriverManager.setDriver(driver);
-                log.info("Driver session created. Session ID: {}", driver.getSessionId());
+            var suite = context.getCurrentXmlTest().getSuite();
+            if (suite.getParallel().isParallel() || suite.getTests().stream().anyMatch(test -> test.getParallel().isParallel())) {
+                throw new MobileInfrastructureException("Driver configuration",
+                        "Parallel TestNG execution is incompatible with the shared physical Android session.");
             }
-        } catch (Exception e) {
-            log.error("FATAL — could not create driver session: {}", e.getMessage(), e);
+            DriverManager.startSession();
+        } catch (RuntimeException e) {
+            context.getSuite().setAttribute(SUITE_SETUP_FAILURE, e);
             throw e;
         }
     }
 
-    @AfterClass(alwaysRun = true)
-    public void tearDown() {
-        log.info(">>> [{}] Finished Execution <<<", getClass().getSimpleName());
+    @BeforeClass(alwaysRun = true)
+    public final void setUp() {
+        if (!DriverManager.hasActiveSession()) {
+            DriverManager.startSession();
+        }
+        driver = getDriver();
     }
 
-    @org.testng.annotations.AfterSuite(alwaysRun = true)
-    public void tearDownSuite() {
-        log.info("=== SUITE COMPLETED: Closing AndroidDriver Session ===");
+    @AfterSuite(alwaysRun = true)
+    public final void finishMobileSuite() {
+        DriverManager.quitDriver();
+    }
+
+    protected final LoginPage openFreshLogin() {
+        prepareAuthScreen();
+        return new LoginPage(getDriver()).openLoginTab();
+    }
+
+    protected final void prepareAuthScreen() {
+        AndroidDriver current = getDriver();
+        LaunchPage launch = new LaunchPage(current);
+        LaunchPage.Screen screen;
         try {
-            DriverManager.quitDriver();
-        } catch (Exception e) {
-            log.warn("Error during driver suite teardown: {}", e.getMessage());
-        } finally {
-            driver = null;
+            screen = launch.waitForAuthEntryScreen();
+        } catch (TimeoutException initialTimeout) {
+            log.warn("VG Cares did not reach a recognized launch screen. Reopening the app once.");
+            try {
+                String appPackage = ConfigManager.get("appPackage", "");
+                current.terminateApp(appPackage);
+                current.activateApp(appPackage);
+                screen = launch.waitForAuthEntryScreen();
+            } catch (RuntimeException recoveryFailure) {
+                recoveryFailure.addSuppressed(initialTimeout);
+                throw recoveryFailure;
+            }
+        }
+        log.info("Preparing authentication from the {} screen", screen);
+        if (screen == LaunchPage.Screen.HOME) {
+            new HomePage(current).logout();
+            launch.waitForAuthTabs();
+        } else {
+            launch.passOnboardingIfPresent(screen);
         }
     }
 
-    /** Always returns the current live driver from the thread-local store. */
-    protected AndroidDriver getDriver() {
+    protected final HomePage loginAsQaDoctor(LoginPage loginPage) {
+        QaCredentials account = QaCredentials.doctor();
+        return loginPage.loginWithDynamicAccount(account.email(), account.password());
+    }
+
+    protected final HomePage loginAsQaDoctor() {
+        QaCredentials account = QaCredentials.doctor();
+        HomePage homePage = openFreshLogin().loginWithDynamicAccount(account.email(), account.password());
+        Assert.assertTrue(homePage.isHomeScreenLoaded(), "The authorized QA account must reach the doctor dashboard.");
+        return homePage;
+    }
+
+    protected final AndroidDriver getDriver() {
         return DriverManager.getDriver();
     }
 }

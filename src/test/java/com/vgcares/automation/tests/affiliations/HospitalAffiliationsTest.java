@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
 import com.vgcares.automation.pages.HospitalAffiliationsPage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -38,18 +37,13 @@ public class HospitalAffiliationsTest extends BaseTest {
     private HomePage homePage;
     private HospitalAffiliationsPage affiliationsPage;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupAffiliationsSuite() {
         testData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         affiliationsData = testData.get("affiliationsData");
 
         // Doctor Login
-        JsonNode docCreds = testData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         homePage = new HomePage(driver);
         Assert.assertTrue(homePage.isHomeScreenLoaded(), "Home screen failed to load after doctor login.");

@@ -8,20 +8,15 @@
   ╚══════════════════════════════════════════════════════════════════════╝
 -->
 
-<suite name="VGCares Full Regression Suite" verbose="2" configfailurepolicy="continue">
-
-    <listeners>
-        <listener class-name="com.vgcares.automation.listeners.TestListener" />
-    </listeners>
+<suite name="VGCares Full Regression Suite" verbose="2" parallel="none" configfailurepolicy="skip">
 
     <test name="Full Regression - Real Android Device" preserve-order="true">
         <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
             <class name="com.vgcares.automation.tests.launch.LaunchTest" />
             <class name="com.vgcares.automation.tests.auth.SignUpTest" />
             <class name="com.vgcares.automation.tests.auth.LoginTest" />
-            <!-- Reserved for future static testing:
             <class name="com.vgcares.automation.tests.auth.DoctorLoginTest" />
-            -->
             <class name="com.vgcares.automation.tests.auth.DynamicLiveLoginTest" />
             <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />
             <class name="com.vgcares.automation.tests.auth.BiometricTest" />

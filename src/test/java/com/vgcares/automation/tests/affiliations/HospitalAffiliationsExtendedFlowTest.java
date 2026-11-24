@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
 import com.vgcares.automation.pages.HospitalAffiliationsPage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -31,17 +30,12 @@ public class HospitalAffiliationsExtendedFlowTest extends BaseTest {
     private HospitalAffiliationsPage affiliationsPage;
     private JsonNode haData;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupExtendedAffiliationsTest() {
         JsonNode authData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         haData = authData.get("hospitalAffiliationsExtendedData");
 
-        JsonNode docCreds = authData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         HomePage homePage = new HomePage(driver);
         affiliationsPage = homePage.openHospitalAffiliations();

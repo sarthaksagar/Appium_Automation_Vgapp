@@ -2,30 +2,13 @@
   "appPackage": "com.vg.vgcaresglobal.qa",
   "appActivity": "com.vg.vgcaresglobal.MainActivity",
 
-  "validUser": {
-    "fullName": "Automation User",
-    "emailDomain": "testvgcares.com",
-    "password": "VGCare@12345",
-    "confirmPassword": "VGCare@12345"
-  },
 
-  "registeredUser": {
-    "email": "harshadalolage24@gmail.com",
-    "password": "VGCare@12345"
-  },
 
-  "dynamicActiveUser": {
-    "email": "virajd@techvishwaguru.com",
-    "password": "Admin@123",
-    "role": "Doctor",
-    "description": "Active dynamic live account for real backend data retrieval",
-    "isDynamic": true
-  },
 
   "passwordMismatch": {
     "fullName": "Mismatch Tester",
     "email": "mismatch.tester@testvgcares.com",
-    "password": "VGCare@12345",
+    "password": "Fixture-Password9!",
     "confirmPassword": "WrongPass@456"
   },
 
@@ -61,10 +44,10 @@
   ],
 
   "validSignupCases": [
-    { "id": "TC_ID_SIGNUP-025", "fullName": "John Michael Doe",   "password": "VGCare@12345", "description": "Name with spaces" },
-    { "id": "TC_ID_SIGNUP-026", "email": "john.doe+test@email.com","password": "VGCare@12345", "description": "Email with dots and plus" },
-    { "id": "TC_ID_SIGNUP-045", "email": "user@domain.co.uk",     "password": "VGCare@12345", "description": "International domain" },
-    { "id": "TC_ID_SIGNUP-050", "fullName": "Dr. John Doe",       "email": "dr.john.doe@hospital.com", "password": "VGCare@12345", "description": "Complex valid details" }
+    { "id": "TC_ID_SIGNUP-025", "fullName": "John Michael Doe",   "password": "Fixture-Password9!", "description": "Name with spaces" },
+    { "id": "TC_ID_SIGNUP-026", "email": "john.doe+test@email.com","password": "Fixture-Password9!", "description": "Email with dots and plus" },
+    { "id": "TC_ID_SIGNUP-045", "email": "user@domain.co.uk",     "password": "Fixture-Password9!", "description": "International domain" },
+    { "id": "TC_ID_SIGNUP-050", "fullName": "Dr. John Doe",       "email": "dr.john.doe@hospital.com", "password": "Fixture-Password9!", "description": "Complex valid details" }
   ],
 
   "loginInvalidEmails": [
@@ -75,14 +58,14 @@
 
   "loginNegativeCases": [
     { "id": "TC_ID_LOGIN-066", "email": "registered@email.com", "password": "valid@1234",       "description": "Wrong case password" },
-    { "id": "TC_ID_LOGIN-067", "email": "deactivated@email.com","password": "VGCare@12345",     "description": "Deactivated account" },
-    { "id": "TC_ID_LOGIN-068", "email": "blocked@email.com",    "password": "VGCare@12345",     "description": "Blocked account" },
-    { "id": "TC_ID_LOGIN-069", "email": "registered@email.com ","password": "VGCare@12345",     "description": "Email with trailing space" },
-    { "id": "TC_ID_LOGIN-070", "email": "registered@email.com", "password": " VGCare@12345",    "description": "Password with leading space" }
+    { "id": "TC_ID_LOGIN-067", "email": "deactivated@email.com","password": "Fixture-Password9!",     "description": "Deactivated account" },
+    { "id": "TC_ID_LOGIN-068", "email": "blocked@email.com",    "password": "Fixture-Password9!",     "description": "Blocked account" },
+    { "id": "TC_ID_LOGIN-069", "email": "registered@email.com ","password": "Fixture-Password9!",     "description": "Email with trailing space" },
+    { "id": "TC_ID_LOGIN-070", "email": "registered@email.com", "password": " Fixture-Password9!",    "description": "Password with leading space" }
   ],
 
   "forgotPasswordEmails": {
-    "valid":        "harshadalolage24@gmail.com",
+    "valid":        "unregistered-doctor@example.invalid",
     "invalid":      "invalidemail",
     "nonExistent":  "notregistered123@email.com",
     "withSpaces":   "test @email.com"
@@ -102,8 +85,6 @@
   ],
 
   "homeData": {
-    "loginEmail":    "harshadalolage24@gmail.com",
-    "loginPassword": "VGCare@12345",
 
     "patientSearchTerms": [
       "Tony Deshpande",
@@ -146,8 +127,6 @@
   "doctorUser": {
     "fullName": "Dr. Prateek Aatmaram Shinde",
     "displayName": "Prateek",
-    "email": "doctor.prateek@vgcares.com",
-    "password": "Doctor@12345",
     "role": "Doctor",
     "specialization": "Dentistry",
     "subSpecialization": "Oral & Maxillofacial Surgery",
@@ -164,26 +143,16 @@
     ]
   },
 
-  "doctorCredentials": {
-    "email": "virajd@techvishwaguru.com",
-    "password": "Admin@123",
-    "note": "Active dynamic doctor account for live test execution"
-  },
 
-  "futureStaticDoctorCredentials": {
-    "email": "doctor.prateek@vgcares.com",
-    "password": "Doctor@12345",
-    "note": "Reserved for future static doctor mock testing"
-  },
 
   "doctorLoginNegativeCases": [
-    { "id": "TC_ID_DOC_LOG-001", "email": "", "password": "Doctor@12345", "description": "Empty email field" },
-    { "id": "TC_ID_DOC_LOG-002", "email": "doctor.prateek@vgcares.com", "password": "", "description": "Empty password field" },
+    { "id": "TC_ID_DOC_LOG-001", "email": "", "password": "Fixture-Password9!", "description": "Empty email field" },
+    { "id": "TC_ID_DOC_LOG-002", "email": "unregistered-doctor@example.invalid", "password": "", "description": "Empty password field" },
     { "id": "TC_ID_DOC_LOG-003", "email": "invalid.doctor@vgcares.com", "password": "WrongPassword@123", "description": "Non-existent doctor account" },
-    { "id": "TC_ID_DOC_LOG-004", "email": "doctor.prateek", "password": "Doctor@12345", "description": "Invalid doctor email format without @" },
-    { "id": "TC_ID_DOC_LOG-005", "email": "doctor.prateek@vgcares", "password": "Doctor@12345", "description": "Email without top-level domain" },
-    { "id": "TC_ID_DOC_LOG-006", "email": "doctor.prateek@vgcares.com", "password": "wrongpassword", "description": "Incorrect password for registered doctor" },
-    { "id": "TC_ID_DOC_LOG-007", "email": "doctor.prateek@vgcares.com ", "password": "Doctor@12345", "description": "Trailing space in doctor email" },
+    { "id": "TC_ID_DOC_LOG-004", "email": "doctor.prateek", "password": "Fixture-Password9!", "description": "Invalid doctor email format without @" },
+    { "id": "TC_ID_DOC_LOG-005", "email": "doctor.prateek@vgcares", "password": "Fixture-Password9!", "description": "Email without top-level domain" },
+    { "id": "TC_ID_DOC_LOG-006", "email": "unregistered-doctor@example.invalid", "password": "wrongpassword", "description": "Incorrect password for registered doctor" },
+    { "id": "TC_ID_DOC_LOG-007", "email": "unregistered-doctor@example.invalid ", "password": "Fixture-Password9!", "description": "Trailing space in doctor email" },
     { "id": "TC_ID_DOC_LOG-008", "email": "' OR '1'='1", "password": "' OR '1'='1", "description": "SQL Injection attempt in doctor login" }
   ],
 
@@ -607,7 +576,7 @@
     "currencies": ["INR", "EUR", "AUD", "JPY", "USD", "GBP"],
     "languages": ["English", "Portuguese", "Hindi", "French", "Russian", "Spanish", "German"],
     "passwordData": {
-      "currentPassword": "VGCare@12345",
+      "currentPassword": "Fixture-Password9!",
       "newPassword": "NewCare@2026#",
       "mismatchPassword": "WrongNewPass!99",
       "weakPassword": "123"

@@ -1,36 +1,25 @@
 package com.vgcares.automation.tests.auth;
 
 import com.vgcares.automation.base.BaseTest;
+import com.vgcares.automation.testdata.AuthFixtures;
 import com.vgcares.automation.dataproviders.AuthDataProvider;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LaunchPage;
 import com.vgcares.automation.pages.LoginPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
-/**
- * ============================================================================
- * VGCares Global – Doctor Authentication & Session Test Suite
- * ============================================================================
- * [STATUS: RESERVED FOR FUTURE TESTING]
- * Static Doctor Data (doctor.prateek@vgcares.com / Doctor@12345) is kept
- * commented / on standby for future multi-role testing.
- * Active automation runs via Dynamic Doctor Login: virajd@techvishwaguru.com
- * ============================================================================
- */
+/** Doctor authentication, dashboard, and session validation. */
 public class DoctorLoginTest extends BaseTest {
 
     private LoginPage loginPage;
     private HomePage homePage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void setupDoctorAuthEnvironment() {
         log.info("Setting up clean launch environment for Doctor Authentication test");
-        new LaunchPage(getDriver()).passOnboardingIfPresent();
-        loginPage = new LoginPage(getDriver());
-        loginPage.openLoginTab();
+        loginPage = openFreshLogin();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -69,7 +58,7 @@ public class DoctorLoginTest extends BaseTest {
           dataProviderClass = AuthDataProvider.class,
           groups = {"regression"}, priority = 3)
     public void testDoctorLoginNegativeScenarios(String tcId, String email, String password, String description) {
-        log.info("Executing {}: {} | Email: '{}'", tcId, description, email);
+        log.info("Executing {}: {}", tcId, description);
         loginPage.clearCredentials()
                  .enterEmailOrPhone(email)
                  .enterPassword(password)
@@ -98,11 +87,11 @@ public class DoctorLoginTest extends BaseTest {
           groups = {"security", "regression"}, priority = 5)
     public void testDoctorLoginPasswordMasking() {
         log.info("Executing TC_ID_DOC_LOG-009: Verifying Doctor password masking");
-        loginPage.enterEmailOrPhone("doctor.prateek@vgcares.com")
-                 .enterPassword("Doctor@12345");
+        String password = AuthFixtures.newPassword();
+        loginPage.enterEmailOrPhone(AuthFixtures.uniqueEmail("example.invalid")).enterPassword(password);
 
         String pageSource = getDriver().getPageSource();
-        Assert.assertFalse(pageSource.contains("Doctor@12345"),
+        Assert.assertFalse(pageSource.contains(password),
                 "[TC_ID_DOC_LOG-009] Raw password text should NEVER appear unmasked in DOM / page source hierarchy.");
     }
 
@@ -111,32 +100,19 @@ public class DoctorLoginTest extends BaseTest {
     // ══════════════════════════════════════════════════════════════════════
 
     @Test(description = "TC_ID_DOC_LOG-010: Verify registered Doctor can login successfully and reach Doctor Dashboard",
-          dataProvider = "doctorValidLoginData",
-          dataProviderClass = AuthDataProvider.class,
           groups = {"smoke", "regression"}, priority = 6)
-    public void testDoctorSuccessfulLoginAndDashboardRedirection(String fullName, String email, String password,
-                                                                 String displayName, String role, String specialization) {
-        log.info("Executing TC_ID_DOC_LOG-010: Positive Doctor Login for {} ({})", fullName, email);
-        loginPage.clearCredentials()
-                 .enterEmailOrPhone(email)
-                 .enterPassword(password)
-                 .clickLogin();
+    public void testDoctorSuccessfulLoginAndDashboardRedirection() {
+        homePage = loginAsQaDoctor(loginPage);
 
-        homePage = new HomePage(getDriver());
         Assert.assertTrue(homePage.isHomeScreenLoaded(),
                 "[TC_ID_DOC_LOG-010] Doctor must be redirected to Doctor Dashboard upon valid authentication.");
     }
 
     @Test(description = "TC_ID_DOC_LOG-011: Verify Doctor Dashboard header displays Dr. greeting and profile avatar",
-          dataProvider = "doctorValidLoginData",
-          dataProviderClass = AuthDataProvider.class,
           groups = {"smoke", "regression"}, priority = 7)
-    public void testDoctorDashboardHeaderGreetingAndAvatar(String fullName, String email, String password,
-                                                           String displayName, String role, String specialization) {
-        log.info("Executing TC_ID_DOC_LOG-011: Header validation for Doctor {}", displayName);
-        loginPage.login(email, password);
+    public void testDoctorDashboardHeaderGreetingAndAvatar() {
+        homePage = loginAsQaDoctor(loginPage);
 
-        homePage = new HomePage(getDriver());
         SoftAssert softAssert = new SoftAssert();
 
         softAssert.assertTrue(homePage.isUserGreetingDisplayed(),
@@ -150,15 +126,11 @@ public class DoctorLoginTest extends BaseTest {
     }
 
     @Test(description = "TC_ID_DOC_LOG-012: Verify Doctor Dashboard displays clinical snapshot and hospital network",
-          dataProvider = "doctorValidLoginData",
-          dataProviderClass = AuthDataProvider.class,
           groups = {"regression"}, priority = 8)
-    public void testDoctorDashboardClinicalSnapshotAndHospitals(String fullName, String email, String password,
-                                                                String displayName, String role, String specialization) {
+    public void testDoctorDashboardClinicalSnapshotAndHospitals() {
         log.info("Executing TC_ID_DOC_LOG-012: Verifying clinical modules for Doctor role");
-        loginPage.login(email, password);
+        homePage = loginAsQaDoctor(loginPage);
 
-        homePage = new HomePage(getDriver());
         SoftAssert softAssert = new SoftAssert();
 
         softAssert.assertTrue(homePage.isTodaySnapshotDisplayed(),
@@ -178,15 +150,11 @@ public class DoctorLoginTest extends BaseTest {
     // ══════════════════════════════════════════════════════════════════════
 
     @Test(description = "TC_ID_DOC_LOG-013: Verify Doctor side navigation drawer displays doctor menu items",
-          dataProvider = "doctorValidLoginData",
-          dataProviderClass = AuthDataProvider.class,
           groups = {"regression"}, priority = 9)
-    public void testDoctorSideNavigationDrawerItems(String fullName, String email, String password,
-                                                   String displayName, String role, String specialization) {
+    public void testDoctorSideNavigationDrawerItems() {
         log.info("Executing TC_ID_DOC_LOG-013: Inspecting Doctor Navigation Drawer");
-        loginPage.login(email, password);
+        homePage = loginAsQaDoctor(loginPage);
 
-        homePage = new HomePage(getDriver());
         boolean drawerOpened = homePage.openSideDrawer();
 
         if (drawerOpened) {
@@ -204,15 +172,11 @@ public class DoctorLoginTest extends BaseTest {
     }
 
     @Test(description = "TC_ID_DOC_LOG-015: Verify Doctor logout cleanly terminates session and returns to login",
-          dataProvider = "doctorValidLoginData",
-          dataProviderClass = AuthDataProvider.class,
           groups = {"smoke", "regression"}, priority = 10)
-    public void testDoctorLogoutCleanSessionTermination(String fullName, String email, String password,
-                                                        String displayName, String role, String specialization) {
+    public void testDoctorLogoutCleanSessionTermination() {
         log.info("Executing TC_ID_DOC_LOG-015: Verifying clean Doctor Logout");
-        loginPage.login(email, password);
+        homePage = loginAsQaDoctor(loginPage);
 
-        homePage = new HomePage(getDriver());
         LoginPage returnedLoginPage = homePage.logout();
 
         Assert.assertTrue(returnedLoginPage.isLoginTabDisplayed() || returnedLoginPage.isLoginButtonDisplayed(),

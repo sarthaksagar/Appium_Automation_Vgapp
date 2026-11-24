@@ -4,7 +4,6 @@ import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.BiometricPage;
 import com.vgcares.automation.pages.HomePage;
 import com.vgcares.automation.pages.LaunchPage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.NotificationsPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -14,7 +13,7 @@ import org.testng.annotations.Test;
  * Home / Dashboard Test Suite.
  *
  * PRE-CONDITION: Valid login required for all Home tests.
- * Uses: harshadalolage24@gmail.com / VGCare@12345
+ * Uses: unregistered-doctor@example.invalid / Fixture-Password9!
  *
  * TC_ID_HC-001  : Home screen loads after login
  * TC_ID_HC-002  : User greeting / name displayed
@@ -51,15 +50,13 @@ public class HomeTest extends BaseTest {
 
     private HomePage homePage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void loginAndNavigateToHome() {
         // 1. Pass onboarding
         new LaunchPage(getDriver()).passOnboardingIfPresent();
 
         // 2. Login with dynamic doctor credentials
-        LoginPage loginPage = new LoginPage(getDriver());
-        loginPage.openLoginTab();
-        loginPage.login("virajd@techvishwaguru.com", "Admin@123");
+        loginAsQaDoctor();
 
         // 3. Skip biometric screen if it appears
         new BiometricPage(getDriver()).skipIfPresent();

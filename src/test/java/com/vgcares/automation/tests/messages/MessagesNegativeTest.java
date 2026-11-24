@@ -4,7 +4,6 @@ import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.dataproviders.AuthDataProvider;
 import com.vgcares.automation.pages.HomePage;
 import com.vgcares.automation.pages.LaunchPage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.MessagesPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -35,12 +34,11 @@ public class MessagesNegativeTest extends BaseTest {
     private HomePage homePage;
     private MessagesPage messagesPage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void setupAndNavigateToMessages() {
         log.info("Setting up authenticated Doctor session and navigating to Messages module");
         new LaunchPage(getDriver()).passOnboardingIfPresent();
-        LoginPage loginPage = new LoginPage(getDriver());
-        loginPage.login("virajd@techvishwaguru.com", "Admin@123");
+        loginAsQaDoctor();
 
         homePage = new HomePage(getDriver());
         Assert.assertTrue(homePage.isHomeScreenLoaded(), "Precondition failed: Doctor must land on Home screen.");

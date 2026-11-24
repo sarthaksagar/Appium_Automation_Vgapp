@@ -2,52 +2,37 @@ package com.vgcares.automation.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public final class JsonUtils {
-
-    private static final Logger log = LogManager.getLogger(JsonUtils.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private JsonUtils() {}
 
-    /**
-     * Reads a JSON file into a JsonNode tree.
-     */
     public static JsonNode readJsonTree(String filePath) {
         try {
-            File file = new File(filePath);
-            if (!file.exists()) {
-                log.error("JSON file does not exist at path: {}", filePath);
-                return null;
+            JsonNode tree = MAPPER.readTree(new File(filePath));
+            if (tree == null || tree.isMissingNode()) {
+                throw new IllegalArgumentException("JSON test data is empty at " + filePath);
             }
-            return mapper.readTree(file);
+            return tree;
         } catch (IOException e) {
-            log.error("Failed to read JSON file at {}: {}", filePath, e.getMessage(), e);
-            return null;
+            throw new UncheckedIOException("Unable to read JSON test data at " + filePath, e);
         }
     }
 
-    /**
-     * Alias for readJsonTree for backwards-compatibility.
-     */
     public static JsonNode readJsonFile(String filePath) {
         return readJsonTree(filePath);
     }
 
-    /**
-     * Maps a specific node in a JSON file to a target POJO class.
-     */
-    public static <T> T readJsonAs(String filePath, Class<T> clazz) {
+    public static <T> T readJsonAs(String filePath, Class<T> type) {
         try {
-            return mapper.readValue(new File(filePath), clazz);
+            return MAPPER.readValue(new File(filePath), type);
         } catch (IOException e) {
-            log.error("Failed to deserialize JSON file to {}: {}", clazz.getSimpleName(), e.getMessage(), e);
-            return null;
+            throw new UncheckedIOException("Unable to read JSON test data at " + filePath, e);
         }
     }
 }

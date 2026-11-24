@@ -3,7 +3,6 @@ package com.vgcares.automation.tests.reviews;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.ReviewsPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
@@ -36,18 +35,13 @@ public class ReviewsSummaryTest extends BaseTest {
     private HomePage homePage;
     private ReviewsPage reviewsPage;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupReviewsSummarySuite() {
         JsonNode testData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         reviewsData = testData.get("reviewsData");
 
         // Doctor Authentication
-        JsonNode docCreds = testData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         homePage = new HomePage(driver);
         Assert.assertTrue(homePage.isHomeScreenLoaded(), "Home screen failed to load after doctor authentication.");

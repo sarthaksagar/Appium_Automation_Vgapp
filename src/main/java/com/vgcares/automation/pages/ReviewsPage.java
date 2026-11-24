@@ -130,16 +130,6 @@ public class ReviewsPage extends BasePage {
         return isElementDisplayed(catPunctuality, 6);
     }
 
-    public String getCategoryRating(String categoryName) {
-        try {
-            By catRatingBy = By.xpath("//*[contains(@text, '" + categoryName + "') or contains(@content-desc, '" + categoryName + "')]/following::*[contains(@text, '5') or contains(@content-desc, '5') or contains(@text, '4') or contains(@content-desc, '4')][1]");
-            WebElement el = findElement(catRatingBy, 4);
-            return el != null ? el.getText() : "5";
-        } catch (Exception e) {
-            return "5";
-        }
-    }
-
     // ── Patient Reviews List ─────────────────────────────────────────────────
     public boolean isPatientReviewsHeadingDisplayed() {
         return isElementDisplayed(patientReviewsHeading, 8);

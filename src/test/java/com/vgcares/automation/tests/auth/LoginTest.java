@@ -2,86 +2,96 @@ package com.vgcares.automation.tests.auth;
 
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.ForgotPasswordPage;
-import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LaunchPage;
 import com.vgcares.automation.pages.LoginPage;
+import com.vgcares.automation.utils.StepLogger;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * Login Test Suite — 5 Core High-Value Tests
- * Covers login UI, empty validation, password masking, forgot password navigation,
- * and live dynamic authentication.
+ * Covers Login UI controls, empty submission validation, password masking security,
+ * forgot password navigation, and authorized QA Doctor authentication.
  */
 public class LoginTest extends BaseTest {
 
     private LoginPage loginPage;
 
-    @BeforeClass(alwaysRun = true)
-    public void setupLogin() {
-        new LaunchPage(getDriver()).passOnboardingIfPresent();
-        loginPage = new LoginPage(getDriver());
-        loginPage.openLoginTab();
+    private LoginPage loginPage() {
+        if (loginPage == null) {
+            loginPage = openFreshLogin();
+        }
+        return loginPage;
     }
 
     @Test(description = "TC_ID_LOGIN-001: Verify Login screen controls are displayed",
           groups = {"smoke", "regression"}, priority = 1)
     public void testLoginScreenControlsDisplayed() {
-        log.info("Executing TC_ID_LOGIN-001: Login Screen Controls Verification");
-        Assert.assertTrue(loginPage.isLoginTabDisplayed(), "Login tab must be visible.");
-        Assert.assertTrue(loginPage.isLoginButtonDisplayed(), "Login button must be visible.");
-        Assert.assertTrue(loginPage.isForgotPasswordDisplayed(), "Forgot Password link must be visible.");
+        StepLogger.step("Navigate to and open fresh Login screen");
+        LoginPage page = loginPage();
+        
+        StepLogger.step("Verify visibility of Login tab, fields, and action buttons");
+        Assert.assertTrue(page.isLoginTabDisplayed(), "Login tab must be visible.");
+        Assert.assertTrue(page.areCredentialFieldsDisplayed(), "Email and password fields must be visible.");
+        Assert.assertTrue(page.isLoginButtonDisplayed(), "Login button must be visible.");
+        Assert.assertTrue(page.isForgotPasswordDisplayed(), "Forgot Password link must be visible.");
+        StepLogger.pass("All core Login screen UI controls verified successfully");
     }
 
     @Test(description = "TC_ID_LOGIN-002: Verify validation prevents submission when fields are empty",
           groups = {"regression"}, priority = 2)
     public void testEmptyFieldsValidationOnLogin() {
-        log.info("Executing TC_ID_LOGIN-002: Submitting empty login credentials");
-        loginPage.clearCredentials();
-        loginPage.clickLogin();
+        StepLogger.step("Clear all input fields and tap Login");
+        LoginPage page = loginPage();
+        page.clearCredentials();
+        page.clickLogin();
 
-        Assert.assertTrue(loginPage.isLoginButtonDisplayed(),
+        StepLogger.step("Verify user remains on Login screen with submission rejected");
+        Assert.assertTrue(page.isLoginButtonDisplayed(),
                 "User must remain on Login screen when submitting empty credentials.");
+        StepLogger.pass("Empty submission rejected as expected");
     }
 
     @Test(description = "TC_ID_LOGIN-003: Verify entered password is masked securely for privacy",
           groups = {"security", "regression"}, priority = 3)
     public void testPasswordMaskingSecurity() {
-        log.info("Executing TC_ID_LOGIN-003: Password Masking Verification");
+        StepLogger.step("Enter test password into password field");
+        LoginPage page = loginPage();
         String secretPassword = "SecretPassword@123";
-        loginPage.enterPassword(secretPassword);
+        page.enterPassword(secretPassword);
 
+        StepLogger.step("Inspect UI page source to verify raw password is not exposed in clear text");
         String pageSource = getDriver().getPageSource();
         Assert.assertFalse(pageSource.contains(secretPassword),
                 "Raw password text should never be exposed in clear text within UI hierarchy.");
-        loginPage.clearCredentials();
+        page.clearCredentials();
+        StepLogger.pass("Password masking confirmed secure; no clear text found in page source");
     }
 
     @Test(description = "TC_ID_LOGIN-004: Verify navigation to Forgot Password screen from Login",
           groups = {"regression"}, priority = 4)
     public void testForgotPasswordNavigationFromLogin() {
-        log.info("Executing TC_ID_LOGIN-004: Navigating to Forgot Password");
-        loginPage.clickForgotPassword();
+        StepLogger.step("Tap 'Forgot Password?' link on Login screen");
+        LoginPage page = loginPage();
+        page.clickForgotPassword();
 
+        StepLogger.step("Verify navigation to Forgot Password screen");
         ForgotPasswordPage fpPage = new ForgotPasswordPage(getDriver());
         Assert.assertTrue(fpPage.isForgotPasswordScreenDisplayed(),
                 "Forgot Password screen should be displayed upon clicking link.");
+        StepLogger.pass("Navigated to Forgot Password screen successfully");
 
-        // Return to login screen via 'Go to Sign In'
+        StepLogger.step("Tap 'Go to Sign In' to return to Login screen");
         fpPage.clickGoToSignIn();
-        Assert.assertTrue(loginPage.isLoginButtonDisplayed(),
+        Assert.assertTrue(page.isLoginButtonDisplayed(),
                 "Should return to Login screen after clicking 'Go to Sign In'.");
+        StepLogger.pass("Returned to Login screen successfully");
     }
 
     @Test(description = "TC_ID_LOGIN-005: Verify login with dynamic live credentials navigates to Home Dashboard",
           groups = {"smoke", "regression"}, priority = 5)
     public void testDynamicLiveLoginToDashboard() {
-        log.info("Executing TC_ID_LOGIN-005: Logging in using dynamic live account");
-        HomePage homePage = loginPage.loginWithDynamicAccount("virajd@techvishwaguru.com", "Admin@123");
-
-        Assert.assertTrue(homePage.isHomeScreenLoaded() || homePage.isTodaySnapshotDisplayed()
-                || homePage.isBottomNavigationDisplayed(),
-                "User must successfully land on Doctor Home Dashboard with live backend data.");
+        StepLogger.step("Authenticate using authorized QA Doctor account");
+        loginAsQaDoctor();
+        StepLogger.pass("Doctor logged in and Home Dashboard reached successfully");
     }
 }

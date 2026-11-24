@@ -2,9 +2,10 @@ package com.vgcares.automation.tests.auth;
 
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.BiometricPage;
-import com.vgcares.automation.pages.LaunchPage;
 import com.vgcares.automation.pages.LoginPage;
+import com.vgcares.automation.pages.HomePage;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -21,11 +22,9 @@ public class BiometricTest extends BaseTest {
     private BiometricPage bioPage;
     private LoginPage loginPage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void navigateToLogin() {
-        new LaunchPage(getDriver()).passOnboardingIfPresent();
-        loginPage = new LoginPage(getDriver());
-        loginPage.openLoginTab();
+        loginPage = openFreshLogin();
         bioPage = new BiometricPage(getDriver());
     }
 
@@ -36,18 +35,15 @@ public class BiometricTest extends BaseTest {
           groups = {"smoke", "regression"}, priority = 1)
     public void testBiometricScreenLoadsAfterLogin() {
         log.info("Executing TC_ID_BIO-001: Biometric screen after login");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
+        loginAsQaDoctor(loginPage);
 
-        try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
 
         if (bioPage.isBiometricScreenDisplayed()) {
             log.info("TC_ID_BIO-001: Biometric screen displayed – PASS");
             Assert.assertTrue(bioPage.isEnableButtonDisplayed() || bioPage.isSkipButtonDisplayed(),
                 "TC_ID_BIO-001: Enable and/or Skip buttons should be present on biometric screen.");
         } else {
-            log.info("TC_ID_BIO-001: Biometric screen not shown (may already be configured or skipped).");
-            Assert.assertNotNull(getDriver().getCurrentPackage(),
-                "TC_ID_BIO-001: App should be active on a valid screen after login.");
+            throw new SkipException("[Physical device] TC_ID_BIO-001 requires the biometric setup prompt.");
         }
     }
 
@@ -58,14 +54,13 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 2)
     public void testBrandHeaderOnBiometricScreen() {
         log.info("Executing TC_ID_BIO-002: Brand header on biometric screen");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             Assert.assertTrue(bioPage.isBrandHeaderDisplayed(),
                 "TC_ID_BIO-002: 'VGCares Global' brand header must be displayed on biometric screen.");
         } else {
-            log.info("TC_ID_BIO-002: Biometric screen not shown – brand header test not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-002 requires the biometric setup prompt.");
         }
     }
 
@@ -76,14 +71,13 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 4)
     public void testBiometricPromptTextDisplayed() {
         log.info("Executing TC_ID_BIO-004: Biometric prompt text");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             Assert.assertTrue(bioPage.isEnableFingerprintPromptDisplayed(),
                 "TC_ID_BIO-004: 'Enable Fingerprint after this sign-in?' prompt must be visible.");
         } else {
-            log.info("TC_ID_BIO-004: Biometric screen not shown – not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-004 requires the biometric setup prompt.");
         }
     }
 
@@ -94,17 +88,9 @@ public class BiometricTest extends BaseTest {
           groups = {"smoke", "regression"}, priority = 6)
     public void testUserCanSkipBiometricSetup() {
         log.info("Executing TC_ID_BIO-006: Skip biometric setup");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
-
-        bioPage.skipIfPresent();
-
-        String src = getDriver().getPageSource();
-        boolean onDashboard = src.contains("Dashboard") || src.contains("Home") ||
-                              src.contains("Welcome") || src.contains("Today") ||
-                              !bioPage.isBiometricScreenDisplayed();
-        Assert.assertTrue(onDashboard,
-            "TC_ID_BIO-006: After skipping biometric, user should be on the Dashboard.");
+        HomePage home = requireFirstLoginPrompt();
+        bioPage.clickSkip();
+        Assert.assertTrue(home.isHomeScreenLoaded(), "Skipping optional biometric enrollment must open the dashboard.");
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -114,14 +100,13 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 7)
     public void testEnableButtonClickable() {
         log.info("Executing TC_ID_BIO-007: Enable button clickable");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             Assert.assertTrue(bioPage.isEnableButtonDisplayed(),
                 "TC_ID_BIO-007: Enable button must be displayed and clickable on biometric screen.");
         } else {
-            log.info("TC_ID_BIO-007: Biometric screen not shown – test not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-007 requires the biometric setup prompt.");
         }
     }
 
@@ -132,14 +117,13 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 8)
     public void testSkipButtonClickable() {
         log.info("Executing TC_ID_BIO-008: Skip button clickable");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             Assert.assertTrue(bioPage.isSkipButtonDisplayed(),
                 "TC_ID_BIO-008: Skip button must be displayed on biometric screen.");
         } else {
-            log.info("TC_ID_BIO-008: Biometric screen not shown – test not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-008 requires the biometric setup prompt.");
         }
     }
 
@@ -150,16 +134,10 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 20)
     public void testBiometricPromptDoesNotReappearAfterSkip() {
         log.info("Executing TC_ID_BIO-020: No re-prompt after skip");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
-
-        bioPage.skipIfPresent();
-        try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-
-        // After skip, biometric screen should not reappear immediately
-        boolean biometricNotShown = !bioPage.isBiometricScreenDisplayed();
-        Assert.assertTrue(biometricNotShown,
-            "TC_ID_BIO-020: Biometric screen should NOT reappear immediately after Skip.");
+        HomePage home = requireFirstLoginPrompt();
+        bioPage.clickSkip();
+        Assert.assertTrue(home.isHomeScreenLoaded(), "Skipping optional biometric enrollment must open the dashboard.");
+        Assert.assertFalse(bioPage.isBiometricScreenDisplayed(), "The biometric setup prompt must remain dismissed.");
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -169,8 +147,7 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 22)
     public void testBiometricButtonsStyling() {
         log.info("Executing TC_ID_BIO-022: Button styling check");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             boolean enableVisible = bioPage.isEnableButtonDisplayed();
@@ -178,7 +155,7 @@ public class BiometricTest extends BaseTest {
             Assert.assertTrue(enableVisible && skipVisible,
                 "TC_ID_BIO-022: Both Enable and Skip buttons should be visible with proper styling.");
         } else {
-            log.info("TC_ID_BIO-022: Biometric screen not shown – not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-022 requires the biometric setup prompt.");
         }
     }
 
@@ -189,15 +166,14 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 27)
     public void testDeviceBackButtonOnBiometricScreen() {
         log.info("Executing TC_ID_BIO-027: Back button on biometric screen");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        loginAsQaDoctor(loginPage);
 
         if (bioPage.isBiometricScreenDisplayed()) {
             getDriver().navigate().back();
             Assert.assertNotNull(getDriver().getCurrentPackage(),
                 "TC_ID_BIO-027: App should not crash on back button press on biometric screen.");
         } else {
-            log.info("TC_ID_BIO-027: Biometric screen not shown – not applicable.");
+            throw new SkipException("[Physical device] TC_ID_BIO-027 requires the biometric setup prompt.");
         }
     }
 
@@ -208,13 +184,20 @@ public class BiometricTest extends BaseTest {
           groups = {"regression"}, priority = 31)
     public void testBiometricScreenShownOnlyOnce() {
         log.info("Executing TC_ID_BIO-031: Biometric screen once per login");
-        loginPage.login("harshadalolage24@gmail.com", "VGCare@12345");
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
-        bioPage.skipIfPresent();
-
-        // App should now be on dashboard without biometric re-prompt
-        boolean notOnBioScreen = !bioPage.isBiometricScreenDisplayed();
-        Assert.assertTrue(notOnBioScreen,
-            "TC_ID_BIO-031: Biometric screen should not be shown again after first skip.");
+        HomePage home = requireFirstLoginPrompt();
+        bioPage.clickSkip();
+        Assert.assertTrue(home.isHomeScreenLoaded(), "First sign-in must reach the dashboard.");
+        home.logout();
+        HomePage nextSignIn = loginAsQaDoctor(openFreshLogin());
+        Assert.assertTrue(nextSignIn.isHomeScreenLoaded(), "The next sign-in must reach the dashboard.");
+        Assert.assertFalse(bioPage.isBiometricScreenDisplayed(), "The first-login prompt must not reappear.");
+    }
+    private HomePage requireFirstLoginPrompt() {
+        HomePage home = loginAsQaDoctor(loginPage);
+        if (!bioPage.isBiometricScreenDisplayed()) {
+            Assert.assertTrue(home.isHomeScreenLoaded(), "Sign-in must reach the dashboard or show biometric setup.");
+            throw new SkipException("[Physical device] This scenario requires an account eligible for the first-login biometric prompt.");
+        }
+        return home;
     }
 }

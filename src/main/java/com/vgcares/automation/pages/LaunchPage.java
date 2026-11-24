@@ -1,15 +1,14 @@
 package com.vgcares.automation.pages;
 
+import com.vgcares.automation.config.ConfigManager;
 import com.vgcares.automation.utils.WaitUtils;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class LaunchPage extends BasePage {
 
@@ -41,13 +40,13 @@ public class LaunchPage extends BasePage {
     private static final By GET_STARTED_BUTTON = By.xpath(
         "//*[contains(@content-desc,'Get Started') or contains(@text,'Get Started')]");
     private static final By LOGIN_TAB = By.xpath(
-        "//*[contains(@content-desc,'Login') or contains(@text,'Login')]");
+        "//*[@clickable='true' and starts-with(@content-desc,'Login\nTab ')]");
     private static final By SIGN_UP_TAB = By.xpath(
-        "//*[contains(@content-desc,'Sign Up') or contains(@text,'Sign Up')]");
-    private static final By AUTH_MARKER = By.xpath(
-        "//*[contains(@content-desc,'Sign Up') or contains(@text,'Sign Up') " +
-        "or contains(@content-desc,'Login') or contains(@text,'Login') " +
-        "or contains(@content-desc,'Create Account') or contains(@text,'Create Account')]");
+        "//*[@clickable='true' and starts-with(@content-desc,'Sign Up\nTab ')]");
+
+    private static final By HOME_MARKER = By.xpath(
+        "//*[contains(@content-desc,'Hello,') or contains(@text,'Hello,') "
+        + "or contains(@content-desc,'Search by patient') or contains(@text,'Search by patient')]");
 
     public enum Screen {
         LANGUAGE(labelContaining("Choose Your Language")),
@@ -55,7 +54,8 @@ public class LaunchPage extends BasePage {
         DOCTORS(labelContaining("Connect with Doctors")),
         HOSPITAL_NETWORK(labelContaining("Hospital Network")),
         GLOBAL_HEALTHCARE(labelContaining("Global Healthcare")),
-        AUTH(AUTH_MARKER);
+        AUTH(SIGN_UP_TAB),
+        HOME(HOME_MARKER);
 
         private final By marker;
 
@@ -123,23 +123,36 @@ public class LaunchPage extends BasePage {
     public void clickGetStarted() {
         log.info("Clicking 'Get Started' button");
         click(GET_STARTED_BUTTON);
+        waitForAuthTabs();
+        log.info("Get Started opened the Login and Sign Up tabs");
     }
 
     public Screen waitForLaunchScreen() {
-        return waitForScreen(Screen.LANGUAGE, Screen.WELCOME, Screen.AUTH, Screen.DOCTORS,
+        return waitForScreen(ConfigManager.getInt("appWaitTimeout", 20),
+            Screen.AUTH, Screen.LANGUAGE, Screen.WELCOME, Screen.DOCTORS,
+            Screen.HOSPITAL_NETWORK, Screen.GLOBAL_HEALTHCARE);
+    }
+
+    public Screen waitForAuthEntryScreen() {
+        return waitForScreen(ConfigManager.getInt("appWaitTimeout", 20),
+            Screen.AUTH, Screen.HOME, Screen.LANGUAGE, Screen.WELCOME, Screen.DOCTORS,
             Screen.HOSPITAL_NETWORK, Screen.GLOBAL_HEALTHCARE);
     }
 
     public Screen waitForScreen(Screen... expectedScreens) {
-        return WaitUtils.getWait(driver, 8).until(d -> {
-            acceptPermissionIfPresent();
+        return waitForScreen(ConfigManager.getInt("explicitWait", 10), expectedScreens);
+    }
+
+    private Screen waitForScreen(int timeoutSeconds, Screen... expectedScreens) {
+        return WaitUtils.getWait(driver, timeoutSeconds)
+                .withMessage("Waiting for VG Cares screen " + Arrays.toString(expectedScreens)).until(d -> {
+            if (acceptPermissionIfPresent()) {
+                return null;
+            }
             for (Screen screen : expectedScreens) {
-                try {
-                    List<WebElement> els = driver.findElements(screen.marker);
-                    if (!els.isEmpty() && els.get(0).isDisplayed()) {
-                        return screen;
-                    }
-                } catch (Exception ignored) {}
+                if (screen == Screen.AUTH ? isAuthScreenVisible() : hasDisplayedElement(screen.marker)) {
+                    return screen;
+                }
             }
             return null;
         });
@@ -169,56 +182,53 @@ public class LaunchPage extends BasePage {
     }
 
     public void waitForAuthTabs() {
-        WaitUtils.waitForVisibility(driver, LOGIN_TAB, 6);
-        WaitUtils.waitForVisibility(driver, SIGN_UP_TAB, 6);
+        WaitUtils.getWait(driver).withMessage("Waiting for the Login and Sign Up tabs").until(d -> {
+            acceptPermissionIfPresent();
+            return isAuthScreenVisible();
+        });
     }
 
-    /** Reaches auth for tests that use onboarding as setup. */
+    /** Advances onboarding until authentication is available. */
     public void passOnboardingIfPresent() {
-        try {
-            acceptPermissionIfPresent();
-            if (isAuthScreenVisible() || isHomeScreenVisible()) {
-                log.info("Already past onboarding; on auth or home screen.");
-                return;
-            }
-            Screen screen = waitForLaunchScreen();
-            if (screen == Screen.LANGUAGE) {
-                selectEnglish().clickContinue();
-                screen = waitForScreen(Screen.WELCOME, Screen.AUTH);
-            }
+        passOnboardingIfPresent(waitForAuthEntryScreen());
+    }
 
-            if (screen != Screen.AUTH && screen != Screen.GLOBAL_HEALTHCARE) {
-                if (WaitUtils.isElementDisplayed(driver, SKIP_BUTTON, 2)) {
-                    click(SKIP_BUTTON);
-                    screen = waitForScreen(Screen.AUTH, Screen.GLOBAL_HEALTHCARE);
-                }
-                while (screen != Screen.AUTH && screen != Screen.GLOBAL_HEALTHCARE) {
-                    screen = advanceToNextSlide(screen);
-                }
-            }
+    public void passOnboardingIfPresent(Screen screen) {
+        if (screen == Screen.HOME || screen == Screen.AUTH) {
+            return;
+        }
+        if (screen == Screen.LANGUAGE) {
+            selectEnglish().clickContinue();
+            screen = waitForScreen(Screen.WELCOME, Screen.AUTH);
+        }
 
-            if (screen == Screen.GLOBAL_HEALTHCARE) {
-                clickGetStarted();
-                waitForScreen(Screen.AUTH);
-            }
-        } catch (Exception e) {
-            log.warn("Onboarding notice: {}", e.getMessage());
+        if (screen != Screen.AUTH && screen != Screen.GLOBAL_HEALTHCARE
+                && WaitUtils.isElementDisplayed(driver, SKIP_BUTTON, 2)) {
+            click(SKIP_BUTTON);
+            screen = waitForScreen(Screen.AUTH, Screen.GLOBAL_HEALTHCARE);
+        }
+        while (screen != Screen.AUTH && screen != Screen.GLOBAL_HEALTHCARE) {
+            screen = advanceToNextSlide(screen);
+        }
+        if (screen == Screen.GLOBAL_HEALTHCARE) {
+            clickGetStarted();
         }
     }
 
     public boolean isHomeScreenVisible() {
-        try {
-            List<WebElement> els = driver.findElements(By.xpath(
-                "//*[contains(@content-desc,'Hello,') or contains(@text,'Hello,') " +
-                "or contains(@content-desc,'Search by patient') or contains(@text,'Search by patient')]"));
-            return !els.isEmpty() && els.get(0).isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
+        return hasDisplayedElement(HOME_MARKER);
     }
 
     public boolean isAuthScreenVisible() {
-        return isScreenVisible(Screen.AUTH);
+        return hasDisplayedElement(SIGN_UP_TAB) && hasDisplayedElement(LOGIN_TAB);
+    }
+
+    private boolean hasDisplayedElement(By locator) {
+        try {
+            return driver.findElements(locator).stream().anyMatch(WebElement::isDisplayed);
+        } catch (StaleElementReferenceException e) {
+            return false;
+        }
     }
 
     private boolean isScreenVisible(Screen screen) {
@@ -253,11 +263,7 @@ public class LaunchPage extends BasePage {
 
     public void waitForSplashToDismiss(int timeoutSeconds) {
         log.info("Waiting for splash screen to dismiss (up to {}s)", timeoutSeconds);
-        try {
-            waitForInvisibility(splashLogoCenter, timeoutSeconds);
-        } catch (Exception e) {
-            log.debug("Splash dismissed or already transitioned: {}", e.getMessage());
-        }
+        waitForInvisibility(splashLogoCenter, timeoutSeconds);
     }
 
 }

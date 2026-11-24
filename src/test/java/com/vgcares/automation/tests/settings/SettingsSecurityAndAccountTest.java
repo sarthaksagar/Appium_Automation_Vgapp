@@ -3,7 +3,6 @@ package com.vgcares.automation.tests.settings;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.SettingsPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
@@ -27,17 +26,12 @@ public class SettingsSecurityAndAccountTest extends BaseTest {
     private SettingsPage settingsPage;
     private JsonNode settingsData;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupSecurityTest() {
         JsonNode authData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         settingsData = authData.get("settingsData");
 
-        JsonNode docCreds = authData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         HomePage homePage = new HomePage(driver);
         settingsPage = homePage.openSettings();

@@ -50,11 +50,9 @@
       <version>${appium.java.client.version}</version>
     </dependency>
 
-    <!-- Selenium Java -->
     <dependency>
       <groupId>org.seleniumhq.selenium</groupId>
-      <artifactId>selenium-java</artifactId>
-      <version>${selenium.version}</version>
+      <artifactId>selenium-support</artifactId>
     </dependency>
 
     <!-- TestNG -->
@@ -62,6 +60,7 @@
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
       <version>${testng.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- ExtentReports 5 -->

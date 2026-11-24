@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.DocumentsPage;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
@@ -35,18 +35,13 @@ public class DocumentsCardsAndLifecycleTest extends BaseTest {
     private HomePage homePage;
     private DocumentsPage documentsPage;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupDocumentsCardsSuite() {
         JsonNode testData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         documentsData = testData.get("documentsData");
 
         // Doctor Authentication
-        JsonNode docCreds = testData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         homePage = new HomePage(driver);
         documentsPage = homePage.openDocuments();
@@ -117,13 +112,11 @@ public class DocumentsCardsAndLifecycleTest extends BaseTest {
 
     @Test(priority = 5, groups = {"regression"}, description = "TC_ID_DOC-201 to 214: Document Status (Pending Review) & Metadata display")
     public void testDocumentStatusAndMetadata() {
-        SoftAssert softAssert = new SoftAssert();
-
-        // TC_ID_DOC-201: Pending Review status
-        softAssert.assertTrue(documentsPage.isPendingReviewStatusDisplayed() || documentsPage.getDocumentCardsList().size() >= 0,
-                "[TC_ID_DOC-201] 'Pending Review' status not displayed on document card.");
-
-        softAssert.assertAll();
+        if (documentsPage.getDocumentCardsList().isEmpty()) {
+            throw new SkipException("[Test data] Seed a QA document in Pending Review for this scenario.");
+        }
+        Assert.assertTrue(documentsPage.isPendingReviewStatusDisplayed(),
+                "[TC_ID_DOC-201] Expected the seeded Pending Review status to be displayed.");
     }
 
     @Test(priority = 6, groups = {"regression"}, description = "TC_ID_DOC-215 to 222: Card layout, spacing and FAB clearance")
@@ -189,14 +182,14 @@ public class DocumentsCardsAndLifecycleTest extends BaseTest {
         Assert.assertTrue(documentsPage.isDocumentsScreenDisplayed(),
                 "[TC_ID_DOC-360] Documents screen not displayed at start of regression flow.");
 
-        // Step 2: Verify existing cards
-        Assert.assertTrue(documentsPage.getDocumentCardsList().size() >= 0,
-                "[TC_ID_DOC-360] Existing documents check failed.");
+        int initialDocumentCount = documentsPage.getDocumentCardsList().size();
 
         // Step 3: Open Add modal, enter details, dismiss
         documentsPage.clickFloatingAddButton();
         documentsPage.enterDocumentNumber("DOC-FULL-REGRESSION");
         documentsPage.clickModalCloseX();
+        Assert.assertEquals(documentsPage.getDocumentCardsList().size(), initialDocumentCount,
+                "Closing the unsaved upload must preserve the document list.");
 
         // Step 4: Scroll down and up
         documentsPage.scrollDownPage();

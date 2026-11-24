@@ -4,54 +4,53 @@ Enterprise Appium mobile automation framework built with Java 17, Appium 2.x, Te
 
 ---
 
-## 📱 Hardware & Environment Prerequisites
+## Windows setup
 
-- **Java JDK**: Version 17+ (e.g. Oracle JDK 17)
-- **Node.js**: v20+ / v24+
-- **Appium Server**: 2.x
-- **Appium Driver**: `uiautomator2` (`appium driver install uiautomator2`)
-- **Android SDK & ADB**: `platform-tools` added to your system PATH
-- **Physical Device**: Android phone connected via USB with **USB Debugging** enabled and authorized
+Use JDK 17, Maven, the Android SDK platform tools, and a USB-connected Android phone with USB debugging enabled. Install the VG Cares QA APK before testing. Accept the phone's debugging authorization prompt and leave the device awake and unlocked while tests run.
 
----
-
-## 🚀 Daily Routine: Quick Start Guide
-
-### Step 1: Connect Your Physical Device
-1. Connect your Android phone to the PC with a data USB cable.
-2. Verify authorization in PowerShell:
-   ```powershell
-   adb devices -l
-   ```
-   Ensure your device is listed with status `device` (e.g., `GIPV9HBMLBHITO5H device`).
-
-### Step 2: Start Appium Server
-Open a dedicated terminal window and run:
-```powershell
-appium --address 127.0.0.1 --port 4723
-```
-*Keep this terminal window running in the background.*
-
-### Step 3: Run Automation Tests
-In your project directory (`D:\My_own_project\Appium`), run:
+Appium 2.16.2 works with UiAutomator2 4.2.9. From the project folder, install the driver once in a workspace-specific Appium home.
 
 ```powershell
-# Run the complete test suite
-mvn clean test
-
-# Run Smoke suite only
-mvn test -DsuiteXmlFile=src/test/resources/suites/smoke.xml
-
-# Run Regression suite
-mvn test -DsuiteXmlFile=src/test/resources/suites/regression.xml
-
-# Run a single test class
-mvn test -Dtest=AppLaunchTest
-mvn test -Dtest=SignUpTest
-mvn test -Dtest=LoginTest
+$env:APPIUM_HOME = Join-Path $PWD 'temp\appium-2-home'
+$env:Path = (Join-Path $env:ANDROID_HOME 'platform-tools') + ';' + $env:Path
+$appium = Join-Path $env:APPDATA 'npm\appium.cmd'
+& $appium driver install uiautomator2@4.2.9
+& $appium driver list --installed
 ```
 
----
+On Windows, the mobile suite starts Appium at `http://127.0.0.1:4723` if the connection is refused, using the workspace Appium home by default. It waits for readiness and stops the server it started after the suite. Appium warnings appear in `logs/automation.log`. An already-running server is reused. For a custom Appium URL, start its server before launching the suite.
+
+To check the USB connection, run the following in the test terminal.
+
+```powershell
+& (Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe') devices -l
+```
+
+If several ADB devices are listed, set VGCARES_UDID to the intended USB phone's serial in the test process environment. Appium settings live in src/main/resources/config.properties. A system property or the corresponding VGCARES_ environment variable can override a setting. For example, VGCARES_APPIUM_SERVER_URL overrides appiumServerUrl, including a custom base path when needed.
+
+## QA test data
+
+- Set VGCARES_DOCTOR_EMAIL and VGCARES_DOCTOR_PASSWORD in the test process environment using an authorized QA doctor account and your local secret manager.
+- Set VGCARES_RESET_EMAIL to an authorized QA mailbox for reset and resend cases. Set VGCARES_SIGNUP_EMAIL_DOMAIN to a controlled QA domain for generated signup addresses.
+- Use a dedicated QA account and test fixtures for flows that save settings, upload files, submit requests, or change server-side state.
+- Enable failure screenshots with -DcaptureScreenshots=true when the device and account contain only disposable QA data.
+
+## Test execution
+
+Run these stages from the project folder. Resolve any failure in the current stage before moving on.
+
+```powershell
+mvn.cmd dependency:tree
+mvn.cmd clean test-compile
+mvn.cmd test '-Dtest=*UnitTest'
+mvn.cmd test '-Dtest=AppLaunchTest'
+mvn.cmd test '-Dtest=LoginTest#testDynamicLiveLoginToDashboard'
+mvn.cmd test '-DsuiteXmlFile=src/test/resources/suites/smoke.xml'
+mvn.cmd test '-Dtest=SettingsPreferencesTest'
+mvn.cmd clean test
+```
+
+Class filters support other modules, including DocumentsUploadAndValidationTest and HomeTest. TestNG opens one session for each serial mobile suite and closes it at suite teardown. When Appium or the phone is unavailable, TestNG records the failed prerequisite and blocks the UI tests. First-run onboarding and biometric setup can require a device or test account in a specific initial state.
 
 ## 🏗️ Framework Architecture
 
@@ -110,8 +109,8 @@ Appium/
 
 ---
 
-## 📊 Reports & Logs
+## Reports and logs
 
-- **Extent HTML Reports**: Generated in `reports/VGCares_Execution_Report_<timestamp>.html`. Includes test status, duration, device info, and Base64-embedded failure screenshots.
-- **Log Files**: Stored in `logs/automation.log` with rolling file rotation.
-- **Screenshots**: Automatically captured on any failure in `screenshots/`.
+- Extent HTML reports are written under reports/. They include configuration failures and individual test results.
+- TestNG and Surefire results are written under target/surefire-reports/.
+- The framework writes rolling logs to logs/automation.log. Failure screenshots are available when explicitly enabled and a driver session is active.

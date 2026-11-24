@@ -1,53 +1,80 @@
 package com.vgcares.automation.driver;
 
 import io.appium.java_client.android.AndroidDriver;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import io.appium.java_client.service.local.AppiumDriverLocalService;
+
+import java.util.function.Supplier;
 
 public final class DriverManager {
-
-    private static final Logger log = LogManager.getLogger(DriverManager.class);
-    private static final ThreadLocal<AndroidDriver> driverThreadLocal = new ThreadLocal<>();
+    private static AndroidDriver activeDriver;
+    private static AppiumDriverLocalService localServer;
+    private static Thread owner;
 
     private DriverManager() {}
 
-    public static boolean hasActiveSession() {
-        AndroidDriver driver = driverThreadLocal.get();
-        if (driver == null) return false;
+    public static synchronized void startSession() {
+        requireAvailable();
         try {
-            return driver.getSessionId() != null;
-        } catch (Exception e) {
-            return false;
+            reserveSession(DriverFactory.createDriver(
+                    (server, timeout) -> localServer = LocalAppiumServer.ensureReady(server, timeout)));
+        } catch (RuntimeException e) {
+            stopLocalServer(e);
+            throw e;
         }
     }
 
-    public static AndroidDriver getDriver() {
-        AndroidDriver driver = driverThreadLocal.get();
-        if (driver == null) {
-            log.error("Driver instance is null for the current thread: {}", Thread.currentThread().getId());
-            throw new IllegalStateException("AndroidDriver has not been initialized. Call DriverFactory.createDriver() first.");
-        }
-        return driver;
+    static synchronized void startSession(Supplier<AndroidDriver> factory) {
+        requireAvailable();
+        reserveSession(factory.get());
     }
 
-    public static void setDriver(AndroidDriver driver) {
-        if (driver != null) {
-            driverThreadLocal.set(driver);
-            log.debug("AndroidDriver set for thread: {}", Thread.currentThread().getId());
+    private static void requireAvailable() {
+        if (owner != null) {
+            throw new MobileInfrastructureException("Driver configuration",
+                    "A physical-device session is already reserved. Run mobile suites sequentially.");
         }
     }
 
-    public static void quitDriver() {
-        AndroidDriver driver = driverThreadLocal.get();
-        if (driver != null) {
-            try {
-                driver.quit();
-                log.info("AndroidDriver session closed successfully for thread: {}", Thread.currentThread().getId());
-            } catch (Exception e) {
-                log.warn("Error while quitting AndroidDriver session: {}", e.getMessage());
-            } finally {
-                driverThreadLocal.remove();
-            }
+    private static void reserveSession(AndroidDriver created) {
+        if (created == null || created.getSessionId() == null) {
+            throw new MobileInfrastructureException("Driver session", "Appium did not return a valid Android session.");
         }
+        activeDriver = created;
+        owner = Thread.currentThread();
+    }
+
+    public static synchronized boolean hasActiveSession() {
+        return owner == Thread.currentThread() && activeDriver.getSessionId() != null;
+    }
+
+    public static synchronized AndroidDriver getDriver() {
+        if (!hasActiveSession()) {
+            throw new MobileInfrastructureException("Driver session",
+                    "This thread has no active Android session. Check the suite setup result.");
+        }
+        return activeDriver;
+    }
+
+    public static synchronized void quitDriver() {
+        if (owner != Thread.currentThread()) {
+            return;
+        }
+        MobileInfrastructureException failure = null;
+        try {
+            activeDriver.quit();
+        } catch (RuntimeException e) {
+            failure = new MobileInfrastructureException("Driver session", "Could not close the Android session.", e);
+            throw failure;
+        } finally {
+            activeDriver = null;
+            owner = null;
+            stopLocalServer(failure);
+        }
+    }
+
+    private static void stopLocalServer(RuntimeException failure) {
+        AppiumDriverLocalService service = localServer;
+        localServer = null;
+        LocalAppiumServer.stop(service, failure);
     }
 }

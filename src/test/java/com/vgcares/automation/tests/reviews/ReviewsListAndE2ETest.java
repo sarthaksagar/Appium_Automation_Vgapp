@@ -3,13 +3,19 @@ package com.vgcares.automation.tests.reviews;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.ReviewsPage;
 import com.vgcares.automation.utils.JsonUtils;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * ============================================================================
@@ -37,18 +43,13 @@ public class ReviewsListAndE2ETest extends BaseTest {
     private HomePage homePage;
     private ReviewsPage reviewsPage;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(groups = {"smoke", "regression"})
     public void setupReviewsListSuite() {
         JsonNode testData = JsonUtils.readJsonFile("src/test/resources/testdata/auth-data.json");
         reviewsData = testData.get("reviewsData");
 
         // Doctor Authentication
-        JsonNode docCreds = testData.get("doctorCredentials");
-        String email = docCreds != null && docCreds.has("email") ? docCreds.get("email").asText() : "virajd@techvishwaguru.com";
-        String password = docCreds != null && docCreds.has("password") ? docCreds.get("password").asText() : "Admin@123";
-
-        LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(email, password);
+        loginAsQaDoctor();
 
         homePage = new HomePage(driver);
         reviewsPage = homePage.openReviews();
@@ -117,8 +118,19 @@ public class ReviewsListAndE2ETest extends BaseTest {
 
     @Test(priority = 4, groups = {"regression"}, description = "TC_ID_RV-109 to 113, 195 to 199: Chronological ordering & multiple patient reviews distinctness")
     public void testReviewOrderingAndDistinctness() {
-        Assert.assertTrue(reviewsPage.getReviewCardsList().size() >= 0,
-                "[TC_ID_RV-109] Review cards list failed retrieval.");
+        reviewsPage.scrollToPatientReviews();
+        Pattern dateLabel = Pattern.compile("\\b\\d{1,2}-[A-Za-z]{3}-\\d{2}\\b");
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("d-MMM-uu", Locale.ENGLISH);
+        var displayedDates = reviewsPage.getReviewCardsList().stream()
+                .flatMap(card -> dateLabel.matcher(card.getText() + "\n" + card.getAttribute("content-desc")).results())
+                .map(match -> LocalDate.parse(match.group(), dateFormat))
+                .distinct()
+                .toList();
+        if (displayedDates.size() < 2) {
+            throw new SkipException("[Test data] This scenario needs two visible QA reviews with distinct dates.");
+        }
+        Assert.assertEquals(displayedDates, displayedDates.stream().sorted(Comparator.reverseOrder()).toList(),
+                "Patient reviews must appear in reverse chronological order.");
     }
 
     @Test(priority = 5, groups = {"regression"}, description = "TC_ID_RV-121 to 130: Vertical scrolling from summary to reviews and back to summary")
@@ -198,7 +210,7 @@ public class ReviewsListAndE2ETest extends BaseTest {
         reviewsPage.scrollToPatientReviews();
 
         // Step 6: Verify patient review cards
-        Assert.assertTrue(reviewsPage.getReviewCardsList().size() >= 0,
+        Assert.assertTrue(!reviewsPage.getReviewCardsList().isEmpty(),
                 "[TC_ID_RV-200] Patient review cards list broken in E2E flow.");
 
         // Step 7: Scroll back up to summary

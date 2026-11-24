@@ -3,7 +3,6 @@ package com.vgcares.automation.tests.slots;
 import com.vgcares.automation.base.BaseTest;
 import com.vgcares.automation.pages.HomePage;
 import com.vgcares.automation.pages.LaunchPage;
-import com.vgcares.automation.pages.LoginPage;
 import com.vgcares.automation.pages.SlotsPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -43,12 +42,11 @@ public class SlotAdvancedStressAndUITest extends BaseTest {
     private HomePage homePage;
     private SlotsPage slotsPage;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"smoke", "regression"})
     public void setupAndNavigateToSlotsScreen() {
         log.info("Setting up authenticated Doctor session and navigating to Slots module");
         new LaunchPage(getDriver()).passOnboardingIfPresent();
-        LoginPage loginPage = new LoginPage(getDriver());
-        loginPage.login("virajd@techvishwaguru.com", "Admin@123");
+        loginAsQaDoctor();
 
         homePage = new HomePage(getDriver());
         Assert.assertTrue(homePage.isHomeScreenLoaded(), "Precondition failed: Doctor must land on Home screen.");

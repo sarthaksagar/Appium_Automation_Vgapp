@@ -3,9 +3,9 @@ target/
 *.class
 
 # Logs & Execution Artifacts
-logs/
-reports/
-screenshots/
+/logs/
+/reports/
+/screenshots/
 *.log
 
 # Eclipse project files
