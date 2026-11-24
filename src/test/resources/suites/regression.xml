@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  VGCares Global – Full Regression Suite (CI/CD)                     ║
+  ║  Run cmd : mvn test -DsuiteXmlFile=src/test/resources/suites/regression.xml ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
+
+<suite name="VGCares Full Regression Suite" verbose="2" parallel="none" configfailurepolicy="skip">
+
+    <test name="Full Regression - Real Android Device" preserve-order="true">
+        <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.LaunchTest" />
+            <class name="com.vgcares.automation.tests.auth.SignUpTest" />
+            <class name="com.vgcares.automation.tests.auth.LoginTest" />
+            <class name="com.vgcares.automation.tests.auth.DoctorLoginTest" />
+            <class name="com.vgcares.automation.tests.auth.DynamicLiveLoginTest" />
+            <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />
+            <class name="com.vgcares.automation.tests.auth.BiometricTest" />
+            <class name="com.vgcares.automation.tests.home.HomeTest" />
+            <class name="com.vgcares.automation.tests.notifications.NotificationBellTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotNavigationTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotHospitalSelectionTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotEmptyStateTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotOpenSlotsTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotActivationSheetTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotStateAndSurgeryBlocksTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotAdvancedStressAndUITest" />
+            <class name="com.vgcares.automation.tests.messages.MessagesNegativeTest" />
+            <class name="com.vgcares.automation.tests.profile.ProfileNavigationAndHeaderTest" />
+            <class name="com.vgcares.automation.tests.profile.ProfileFormsAndValidationTest" />
+            <class name="com.vgcares.automation.tests.profile.ProfileAdvancedStressAndStateTest" />
+            <class name="com.vgcares.automation.tests.affiliations.HospitalAffiliationsTest" />
+            <class name="com.vgcares.automation.tests.affiliations.HospitalAffiliationsRequestTest" />
+            <class name="com.vgcares.automation.tests.surgery.SurgeryRequestsListTest" />
+            <class name="com.vgcares.automation.tests.surgery.SurgeryRequestsDetailAndE2ETest" />
+            <class name="com.vgcares.automation.tests.consultation.ConsultationFeesTest" />
+            <class name="com.vgcares.automation.tests.consultation.ConsultationFeesHistoryAndE2ETest" />
+            <class name="com.vgcares.automation.tests.reviews.ReviewsSummaryTest" />
+            <class name="com.vgcares.automation.tests.reviews.ReviewsListAndE2ETest" />
+            <class name="com.vgcares.automation.tests.documents.DocumentsUploadAndValidationTest" />
+            <class name="com.vgcares.automation.tests.documents.DocumentsCardsAndLifecycleTest" />
+            <class name="com.vgcares.automation.tests.settings.SettingsPreferencesTest" />
+            <class name="com.vgcares.automation.tests.settings.SettingsSecurityAndAccountTest" />
+            <class name="com.vgcares.automation.tests.navigation.NavigationDrawerComprehensiveTest" />
+            <class name="com.vgcares.automation.tests.launch.SplashScreenComprehensiveTest" />
+            <class name="com.vgcares.automation.tests.affiliations.HospitalAffiliationsExtendedFlowTest" />
+        </classes>
+    </test>
+
+</suite>

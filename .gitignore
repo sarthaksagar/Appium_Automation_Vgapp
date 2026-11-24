@@ -1,0 +1,33 @@
+# Maven build outputs
+target/
+*.class
+
+# Logs & Execution Artifacts
+/logs/
+/reports/
+/screenshots/
+*.log
+
+# Eclipse project files
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Temporary & dump files
+ui.xml
+temp/
+*.tmp
