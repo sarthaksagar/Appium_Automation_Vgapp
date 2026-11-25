@@ -24,6 +24,13 @@ public class SignUpTest extends BaseTest {
         signUpPage.openSignUpTab();
     }
 
+    @org.testng.annotations.BeforeMethod(alwaysRun = true)
+    public void resetSignUpForm() {
+        if (signUpPage != null) {
+            signUpPage.scrollToTop();
+        }
+    }
+
     @Test(description = "TC_ID_SIGNUP-001: Verify Sign Up screen UI fields and controls are displayed",
           groups = {"smoke", "regression"}, priority = 1)
     public void testSignUpScreenUIControlsDisplayed() {
