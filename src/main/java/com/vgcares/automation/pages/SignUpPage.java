@@ -35,7 +35,7 @@ public class SignUpPage extends BasePage {
     private final By fullNameField       = By.xpath("(//android.widget.EditText)[1]");
     private final By emailField          = By.xpath("(//android.widget.EditText)[2]");
     private final By passwordField       = By.xpath("(//android.widget.EditText)[3]");
-    private final By confirmPasswordField = By.xpath("(//android.widget.EditText)[4]");
+    private final By confirmPasswordField = By.xpath("(//android.widget.EditText)[4] | (//android.widget.EditText)[last()]");
 
     // ── Create Account Button ──────────────────────────────────────────────
     // Try accessibilityId first; fall back to text/content-desc XPath
@@ -104,7 +104,15 @@ public class SignUpPage extends BasePage {
             click(signUpTab);
         }
         waitForVisibility(createAccountButton);
-        waitForVisibility(fullNameField, 10);
+        scrollToTop();
+        return this;
+    }
+
+    public SignUpPage scrollToTop() {
+        try {
+            driver.findElement(AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true)).scrollToBeginning(5)"));
+        } catch (Exception ignored) {}
         return this;
     }
 
@@ -128,12 +136,19 @@ public class SignUpPage extends BasePage {
     public SignUpPage enterPassword(String password) {
         log.info("Entering Password");
         clearAndSendKeys(passwordField, password);
+        hideKeyboard();
         return this;
     }
 
     public SignUpPage enterConfirmPassword(String confirmPassword) {
         log.info("Entering Confirm Password");
+        if (!isElementDisplayed(confirmPasswordField, 4)) {
+            try {
+                hideKeyboard();
+            } catch (Exception ignored) {}
+        }
         clearAndSendKeys(confirmPasswordField, confirmPassword);
+        hideKeyboard();
         return this;
     }
 
@@ -165,7 +180,20 @@ public class SignUpPage extends BasePage {
     }
 
     public boolean isPasswordChecklistVisible() {
-        return isElementDisplayed(requirement8Chars, 5);
+        if (!isElementDisplayed(requirement8Chars, 2)) {
+            // Focus password field to trigger Flutter's dynamic requirement checklist
+            try {
+                click(passwordField);
+                clearAndSendKeys(passwordField, "a");
+            } catch (Exception ignored) {}
+        }
+        boolean visible = isElementDisplayed(requirement8Chars, 5) 
+                       || isElementDisplayed(requirementUppercase, 2)
+                       || isElementDisplayed(requirementNumber, 2);
+        try {
+            hideKeyboard();
+        } catch (Exception ignored) {}
+        return visible;
     }
 
     public boolean isRequirement8CharsVisible()    { return isElementDisplayed(requirement8Chars,    5); }

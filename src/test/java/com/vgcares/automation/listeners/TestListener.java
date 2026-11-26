@@ -38,9 +38,9 @@ public class TestListener implements ITestListener, IConfigurationListener {
         ExtentReportManager.flushReports();
         System.out.println("\n##################################################");
         System.out.println("SUITE FINISHED: " + context.getName());
-        System.out.println("Passed: " + context.getPassedTests().size() + 
-                           " | Failed: " + context.getFailedTests().size() + 
-                           " | Skipped: " + context.getSkippedTests().size());
+        System.out.println("Passed: " + context.getPassedTests().size() +
+                " | Failed: " + context.getFailedTests().size() +
+                " | Skipped: " + context.getSkippedTests().size());
         System.out.println("##################################################\n");
     }
 
@@ -86,7 +86,8 @@ public class TestListener implements ITestListener, IConfigurationListener {
         double durationSeconds = (result.getEndMillis() - result.getStartMillis()) / 1000.0;
         String testCaseId = resolveTestCaseId(result);
         String reason = safeFailure(result.getThrowable());
-        String exceptionType = result.getThrowable() != null ? result.getThrowable().getClass().getSimpleName() : "UnknownError";
+        String exceptionType = result.getThrowable() != null ? result.getThrowable().getClass().getSimpleName()
+                : "UnknownError";
 
         String screenshotPath = "N/A";
         if (DriverManager.hasActiveSession() && ConfigManager.getBoolean("captureScreenshots", true)) {
@@ -194,6 +195,7 @@ public class TestListener implements ITestListener, IConfigurationListener {
         int priority = result.getMethod().getPriority();
         if (priority <= 1) return "P1 (Critical)";
         if (priority <= 3) return "P2 (High)";
+
         return "P3 (Medium)";
     }
 

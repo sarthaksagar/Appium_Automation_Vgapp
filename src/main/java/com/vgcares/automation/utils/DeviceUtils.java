@@ -94,7 +94,16 @@ public final class DeviceUtils {
         }
         String windowPolicy = shell(udid, "dumpsys", "window", "policy");
         if (KEYGUARD.matcher(windowPolicy).find() || SCREEN_OFF.matcher(windowPolicy).find()) {
-            throw new MobileInfrastructureException("Physical device", "Wake and unlock the USB Android device before running automation.");
+            try {
+                shell(udid, "input", "keyevent", "KEYCODE_WAKEUP");
+                shell(udid, "wm", "dismiss-keyguard");
+                shell(udid, "input", "keyevent", "82");
+                Thread.sleep(800);
+            } catch (Exception ignored) {}
+            windowPolicy = shell(udid, "dumpsys", "window", "policy");
+            if (KEYGUARD.matcher(windowPolicy).find() || SCREEN_OFF.matcher(windowPolicy).find()) {
+                throw new MobileInfrastructureException("Physical device", "Wake and unlock the USB Android device before running automation.");
+            }
         }
         return new AndroidDevice(udid, release, model, resolvedActivity);
     }

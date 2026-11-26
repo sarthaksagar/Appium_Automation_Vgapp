@@ -50,21 +50,29 @@ public class HomeTest extends BaseTest {
 
     private HomePage homePage;
 
+    @org.testng.annotations.BeforeClass(alwaysRun = true)
+    public void setupHomeClass() {
+        if (!com.vgcares.automation.driver.DriverManager.hasActiveSession()) {
+            com.vgcares.automation.driver.DriverManager.startSession();
+        }
+        homePage = new HomePage(getDriver());
+        if (!homePage.isHomeScreenLoaded()) {
+            new LaunchPage(getDriver()).passOnboardingIfPresent();
+            loginAsQaDoctor();
+            new BiometricPage(getDriver()).skipIfPresent();
+        }
+    }
+
     @BeforeMethod(groups = {"smoke", "regression"})
     public void loginAndNavigateToHome() {
-        // 1. Pass onboarding
-        new LaunchPage(getDriver()).passOnboardingIfPresent();
-
-        // 2. Login with dynamic doctor credentials
-        loginAsQaDoctor();
-
-        // 3. Skip biometric screen if it appears
-        new BiometricPage(getDriver()).skipIfPresent();
-
-        // 4. Wait briefly for dashboard to load
-        try { Thread.sleep(2500); } catch (InterruptedException ignored) {}
-
-        homePage = new HomePage(getDriver());
+        if (homePage == null) {
+            homePage = new HomePage(getDriver());
+        }
+        if (!homePage.isHomeScreenLoaded()) {
+            new LaunchPage(getDriver()).passOnboardingIfPresent();
+            loginAsQaDoctor();
+            new BiometricPage(getDriver()).skipIfPresent();
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════
