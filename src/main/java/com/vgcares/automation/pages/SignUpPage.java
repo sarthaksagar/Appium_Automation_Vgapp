@@ -65,9 +65,11 @@ public class SignUpPage extends BasePage {
     private final By errorIndicator = By.xpath(
         "//*[contains(@text,'required') or contains(@text,'match') or contains(@text,'already')" +
         " or contains(@text,'Invalid') or contains(@text,'must contain') or contains(@text,'enter')" +
+        " or contains(@text,'valid email') or contains(@text,'letters') or contains(@text,'exists')" +
         " or contains(@content-desc,'required') or contains(@content-desc,'match')" +
         " or contains(@content-desc,'already') or contains(@content-desc,'Invalid')" +
-        " or contains(@content-desc,'enter')]");
+        " or contains(@content-desc,'enter') or contains(@content-desc,'valid email')" +
+        " or contains(@content-desc,'letters') or contains(@content-desc,'exists')]");
 
     // ── Success / Next-screen Indicators ──────────────────────────────────
     private final By successIndicator = By.xpath(

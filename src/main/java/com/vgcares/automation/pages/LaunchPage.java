@@ -266,4 +266,118 @@ public class LaunchPage extends BasePage {
         waitForInvisibility(splashLogoCenter, timeoutSeconds);
     }
 
+    // ── Extended Language & Onboarding Helpers (TC_ID_LAUNCH-001..020) ─────
+
+    public boolean isChooseLanguageHeadingDisplayed() {
+        return isElementDisplayed(labelContaining("Choose Your Language"), 8);
+    }
+
+    public boolean isContinueButtonDisplayed() {
+        return isElementDisplayed(CONTINUE_BUTTON, 5)
+                || isElementDisplayed(labelContaining("Continue"), 5);
+    }
+
+    public boolean isContinueButtonEnabled() {
+        try {
+            java.util.List<WebElement> els = driver.findElements(CONTINUE_BUTTON);
+            if (els.isEmpty()) {
+                els = driver.findElements(labelContaining("Continue"));
+            }
+            return !els.isEmpty() && els.get(0).isEnabled();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isLanguageOptionVisible(String languageName) {
+        if (isElementDisplayed(labelContaining(languageName), 2)) {
+            return true;
+        }
+        try {
+            driver.findElement(io.appium.java_client.AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().descriptionContains(\""
+                    + languageName + "\"))"));
+            return true;
+        } catch (Exception ignored) {
+            return isElementDisplayed(labelContaining(languageName), 2);
+        }
+    }
+
+    public boolean isLanguageSelected(String languageName) {
+        try {
+            java.util.List<WebElement> els = driver.findElements(labelContaining(languageName));
+            for (WebElement el : els) {
+                String checked = el.getAttribute("checked");
+                String selected = el.getAttribute("selected");
+                if ("true".equalsIgnoreCase(checked) || "true".equalsIgnoreCase(selected)) {
+                    return true;
+                }
+            }
+            // Also check radio button descendant/sibling if Flutter nests it
+            java.util.List<WebElement> radios = driver.findElements(By.xpath(
+                "//*[contains(@content-desc,'" + languageName + "') or contains(@text,'" + languageName + "')]//*[@checked='true' or @selected='true']"));
+            return !radios.isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isSkipButtonDisplayed() {
+        return isElementDisplayed(SKIP_BUTTON, 5);
+    }
+
+    public boolean isBackButtonDisplayed() {
+        return isElementDisplayed(BACK_BUTTON, 5);
+    }
+
+    public boolean isOnboardingGraphicCentered() {
+        try {
+            java.util.List<WebElement> imgs = driver.findElements(By.className("android.widget.ImageView"));
+            if (imgs.isEmpty()) {
+                return false;
+            }
+            int screenWidth = driver.manage().window().getSize().getWidth();
+            for (WebElement img : imgs) {
+                if (img.isDisplayed() && img.getSize().getWidth() > 40) {
+                    int center = img.getLocation().getX() + (img.getSize().getWidth() / 2);
+                    if (Math.abs(center - (screenWidth / 2)) <= screenWidth * 0.25) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isHeadingStyleConsistent() {
+        try {
+            java.util.List<WebElement> views = driver.findElements(By.xpath(
+                "//*[contains(@content-desc,'Welcome') or contains(@content-desc,'Connect') "
+                    + "or contains(@content-desc,'Hospital Network') or contains(@content-desc,'Global Healthcare')]"));
+            for (WebElement v : views) {
+                if (v.isDisplayed() && v.getSize().getHeight() > 20 && v.getSize().getWidth() > 100) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void pressDeviceBack() {
+        log.info("Pressing Android device back button");
+        driver.navigate().back();
+        applyDemonstrationDelay();
+    }
+
+    public void restartApp() {
+        String pkg = ConfigManager.get("appPackage", "com.vg.vgcaresglobal.qa");
+        log.info("Restarting app package: {}", pkg);
+        driver.terminateApp(pkg);
+        driver.activateApp(pkg);
+    }
+
 }

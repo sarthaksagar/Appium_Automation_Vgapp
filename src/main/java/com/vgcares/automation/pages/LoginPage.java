@@ -42,12 +42,23 @@ public class LoginPage extends BasePage {
             "//*[contains(@content-desc,'Forgot Password') or contains(@text,'Forgot Password')" +
                     " or contains(@content-desc,'Forgot') or contains(@text,'Forgot')]");
 
-    // ── Error Indicators ───────────────────────────────────────────────────
+    // ── Error & Toast Indicators ───────────────────────────────────────────
+    private final By signUpTab = By.xpath(
+            "//*[@clickable='true' and starts-with(@content-desc,'Sign Up\nTab ')]");
+
     private final By errorMessage = By.xpath(
             "//*[contains(@text,'Invalid') or contains(@text,'incorrect') or contains(@text,'required')" +
                     " or contains(@text,'wrong') or contains(@text,'not found')" +
+                    " or contains(@text,'Please enter') or contains(@text,'deactivated') or contains(@text,'blocked')" +
                     " or contains(@content-desc,'Invalid') or contains(@content-desc,'incorrect')" +
-                    " or contains(@content-desc,'required')]");
+                    " or contains(@content-desc,'required') or contains(@content-desc,'Please enter')" +
+                    " or contains(@content-desc,'deactivated') or contains(@content-desc,'blocked')]");
+
+    private final By toastContainer = By.xpath(
+            "//android.widget.Toast | //*[contains(@resource-id,'toast') or contains(@class,'Toast')" +
+                    " or contains(@content-desc,'Invalid') or contains(@content-desc,'Please enter')" +
+                    " or contains(@content-desc,'deactivated') or contains(@content-desc,'blocked')" +
+                    " or contains(@text,'Invalid') or contains(@text,'Please enter')]");
 
     public LoginPage(AndroidDriver driver) {
         super(driver);
@@ -153,5 +164,71 @@ public class LoginPage extends BasePage {
 
     public String getErrorMessageText() {
         return isErrorMessageDisplayed() ? getText(errorMessage) : "";
+    }
+
+    public LoginPage switchToSignUpTab() {
+        log.info("Switching to Sign Up tab from Login screen");
+        click(signUpTab);
+        return this;
+    }
+
+    public LoginPage focusEmailField() {
+        click(emailOrPhoneField);
+        return this;
+    }
+
+    public LoginPage focusPasswordField() {
+        click(passwordField);
+        return this;
+    }
+
+    public void pressDeviceBack() {
+        log.info("Pressing Android device back button on Login screen");
+        driver.navigate().back();
+        applyDemonstrationDelay();
+    }
+
+    public boolean isToastOrErrorVisible(int timeoutSeconds) {
+        return isElementDisplayed(toastContainer, timeoutSeconds) || isElementDisplayed(errorMessage, 2);
+    }
+
+    public boolean waitForToastToDisappear(int timeoutSeconds) {
+        return waitForInvisibility(toastContainer, timeoutSeconds);
+    }
+
+    public WebElement getVisibleToastOrErrorElement() {
+        List<WebElement> els = findElements(toastContainer);
+        for (WebElement el : els) {
+            try {
+                if (el.isDisplayed()) {
+                    return el;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    public boolean areLoginControlsWithinScreenBoundsAndNonOverlapping() {
+        try {
+            int screenWidth = driver.manage().window().getSize().getWidth();
+            int screenHeight = driver.manage().window().getSize().getHeight();
+            WebElement email = waitForVisibility(emailOrPhoneField);
+            WebElement password = waitForVisibility(passwordField);
+            WebElement btn = waitForVisibility(loginButton);
+
+            org.openqa.selenium.Rectangle eRect = email.getRect();
+            org.openqa.selenium.Rectangle pRect = password.getRect();
+            org.openqa.selenium.Rectangle bRect = btn.getRect();
+
+            boolean inside = eRect.getX() >= 0 && (eRect.getX() + eRect.getWidth()) <= screenWidth
+                    && pRect.getX() >= 0 && (pRect.getX() + pRect.getWidth()) <= screenWidth
+                    && bRect.getX() >= 0 && (bRect.getX() + bRect.getWidth()) <= screenWidth
+                    && bRect.getY() + bRect.getHeight() <= screenHeight;
+            boolean nonOverlapping = (eRect.getY() + eRect.getHeight() <= pRect.getY() + 5)
+                    && (pRect.getY() + pRect.getHeight() <= bRect.getY() + 5);
+            return inside && nonOverlapping;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
