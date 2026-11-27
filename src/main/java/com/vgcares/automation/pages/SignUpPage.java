@@ -1,8 +1,11 @@
 package com.vgcares.automation.pages;
 
+import com.vgcares.automation.utils.WaitUtils;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebElement;
 
 /**
  * Page Object for the Sign-Up screen of VGCares Global Doctor (Flutter app).
@@ -32,15 +35,14 @@ public class SignUpPage extends BasePage {
     // ── Form Fields (index-based — works reliably in Flutter + UiAutomator2) ─
     // The @hint attribute is NOT exposed by Flutter's UiAutomator2 bridge.
     // Index positions are stable as long as the form layout doesn't change.
-    private final By fullNameField       = By.xpath("(//android.widget.EditText)[1]");
-    private final By emailField          = By.xpath("(//android.widget.EditText)[2]");
-    private final By passwordField       = By.xpath("(//android.widget.EditText)[3]");
-    private final By confirmPasswordField = By.xpath("(//android.widget.EditText)[4]");
+    private final By fullNameField        = By.xpath("(//android.widget.EditText)[1]");
+    private final By emailField           = By.xpath("(//android.widget.EditText)[2]");
+    private final By passwordField        = By.xpath("(//android.widget.EditText)[3]");
+    private final By confirmPasswordField = By.xpath("(//android.widget.EditText)[4] | (//android.widget.EditText)[last()]");
 
     // ── Create Account Button ──────────────────────────────────────────────
-    // Try accessibilityId first; fall back to text/content-desc XPath
     private final By createAccountButton = By.xpath(
-        "//*[contains(@content-desc,'Create Account') or contains(@text,'Create Account')]");
+        "//*[@clickable='true' and (contains(@content-desc,'Create Account') or contains(@text,'Create Account'))]");
 
     // ── Password Strength Checklist ────────────────────────────────────────
     private final By requirement8Chars    = By.xpath(
@@ -61,13 +63,18 @@ public class SignUpPage extends BasePage {
         "(//android.widget.EditText)[4]/following-sibling::*[@clickable='true']");
 
     // ── Validation / Error Indicators ─────────────────────────────────────
-    // Covers Flutter inline error text rendered via Text widgets
+    // Exclude EditText hints (e.g. "Re-enter your password") so placeholders never count as errors
     private final By errorIndicator = By.xpath(
-        "//*[contains(@text,'required') or contains(@text,'match') or contains(@text,'already')" +
-        " or contains(@text,'Invalid') or contains(@text,'must contain') or contains(@text,'enter')" +
+        "//*[not(self::android.widget.EditText) and (" +
+        "contains(@text,'required') or contains(@text,'match') or contains(@text,'already')" +
+        " or contains(@text,'Invalid') or contains(@text,'must contain')" +
+        " or contains(@text,'valid email') or contains(@text,'exists')" +
         " or contains(@content-desc,'required') or contains(@content-desc,'match')" +
         " or contains(@content-desc,'already') or contains(@content-desc,'Invalid')" +
-        " or contains(@content-desc,'enter')]");
+        " or contains(@content-desc,'must contain') or contains(@content-desc,'valid email')" +
+        " or contains(@content-desc,'exists')" +
+        " or contains(@text,'Please enter') or contains(@content-desc,'Please enter')" +
+        " or contains(@text,'Re-enter your') or contains(@content-desc,'Re-enter your'))]");
 
     // ── Success / Next-screen Indicators ──────────────────────────────────
     private final By successIndicator = By.xpath(
@@ -92,6 +99,13 @@ public class SignUpPage extends BasePage {
     private final By confirmEmailResendText = By.xpath(
         "//*[contains(@content-desc,'Resend') or contains(@text,'Resend')]");
 
+    public enum SignUpOutcome {
+        CONFIRM_EMAIL_MODAL,
+        NAVIGATED,
+        ERROR,
+        STILL_ON_SIGNUP
+    }
+
     public SignUpPage(AndroidDriver driver) {
         super(driver);
     }
@@ -104,7 +118,19 @@ public class SignUpPage extends BasePage {
             click(signUpTab);
         }
         waitForVisibility(createAccountButton);
+        scrollToTop();
         waitForVisibility(fullNameField, 10);
+        return this;
+    }
+
+    public SignUpPage scrollToTop() {
+        if (isElementDisplayedNow(fullNameField)) {
+            return this;
+        }
+        try {
+            driver.findElement(AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true)).scrollToBeginning(2)"));
+        } catch (Exception ignored) {}
         return this;
     }
 
@@ -116,6 +142,7 @@ public class SignUpPage extends BasePage {
     // ── Field Interactions ──────────────────────────────────────────────────
 
     public SignUpPage enterFullName(String fullName) {
+        scrollToTop();
         clearAndSendKeys(fullNameField, fullName);
         return this;
     }
@@ -128,12 +155,21 @@ public class SignUpPage extends BasePage {
     public SignUpPage enterPassword(String password) {
         log.info("Entering Password");
         clearAndSendKeys(passwordField, password);
+        if (!isElementDisplayedNow(confirmPasswordField)) {
+            hideKeyboard();
+        }
         return this;
     }
 
     public SignUpPage enterConfirmPassword(String confirmPassword) {
         log.info("Entering Confirm Password");
+        if (!isElementDisplayedNow(confirmPasswordField)) {
+            hideKeyboard();
+        }
         clearAndSendKeys(confirmPasswordField, confirmPassword);
+        if (!isElementDisplayedNow(createAccountButton)) {
+            hideKeyboard();
+        }
         return this;
     }
 
@@ -160,6 +196,10 @@ public class SignUpPage extends BasePage {
 
     // ── State Checks ───────────────────────────────────────────────────────
 
+    public boolean isOnSignUpFormNow() {
+        return isElementDisplayedNow(createAccountButton);
+    }
+
     public boolean isCreateAccountButtonDisplayed() {
         return isElementDisplayed(createAccountButton, 10);
     }
@@ -179,7 +219,37 @@ public class SignUpPage extends BasePage {
     }
 
     public boolean isErrorOrValidationDisplayed() {
-        return isElementDisplayed(errorIndicator, 8);
+        return isElementDisplayed(errorIndicator, 3) || isElementDisplayedNow(toastMessage);
+    }
+
+    public SignUpOutcome waitForSignUpOutcome(int timeoutSeconds) {
+        try {
+            return WaitUtils.getWait(driver, timeoutSeconds).until(d -> {
+                if (isElementDisplayedNow(confirmEmailModalTitle) || isElementDisplayedNow(confirmEmailModalBody)) {
+                    return SignUpOutcome.CONFIRM_EMAIL_MODAL;
+                }
+                if (isElementDisplayedNow(successIndicator)
+                        || (!isElementDisplayedNow(createAccountButton) && !isElementDisplayedNow(signUpTab))) {
+                    return SignUpOutcome.NAVIGATED;
+                }
+                if (isElementDisplayedNow(errorIndicator) || isElementDisplayedNow(toastMessage)) {
+                    return SignUpOutcome.ERROR;
+                }
+                return null;
+            });
+        } catch (TimeoutException e) {
+            return SignUpOutcome.STILL_ON_SIGNUP;
+        }
+    }
+
+    public boolean waitForValidationOrStay(int timeoutSeconds) {
+        try {
+            Boolean errorFound = WaitUtils.getWait(driver, timeoutSeconds).until(d ->
+                    (isElementDisplayedNow(errorIndicator) || isElementDisplayedNow(toastMessage)) ? Boolean.TRUE : null);
+            return Boolean.TRUE.equals(errorFound);
+        } catch (TimeoutException e) {
+            return isElementDisplayedNow(createAccountButton);
+        }
     }
 
     public boolean isConfirmEmailModalDisplayed() {

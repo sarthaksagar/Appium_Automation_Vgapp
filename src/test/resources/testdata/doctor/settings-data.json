@@ -1,0 +1,5 @@
+{
+  "role": "DOCTOR",
+  "module": "doctor/settings",
+  "testData": {}
+}

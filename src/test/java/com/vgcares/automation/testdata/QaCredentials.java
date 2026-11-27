@@ -83,7 +83,8 @@ public final class QaCredentials {
             value = environment.apply(secondaryKey);
         }
         if (value == null || value.isBlank()) {
-            throw new SkipException("[Test data] Set " + primaryKey + " for this QA scenario.");
+            throw new SkipException("[Test data] Set " + secondaryKey + " (or " + primaryKey
+                    + ") in .env or OS environment variables for this QA scenario.");
         }
         return value.trim();
     }

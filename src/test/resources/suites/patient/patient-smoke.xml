@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="VGCares Patient Smoke Suite" verbose="2" parallel="none" configfailurepolicy="skip">
+    <test name="Patient Smoke Tests - Physical Android" preserve-order="true">
+        <groups>
+            <run>
+                <include name="smoke" />
+            </run>
+        </groups>
+        <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.LaunchTest" />
+            <class name="com.vgcares.automation.tests.patient.auth.PatientAuthTest" />
+            <class name="com.vgcares.automation.tests.patient.home.PatientDashboardTest" />
+        </classes>
+    </test>
+</suite>

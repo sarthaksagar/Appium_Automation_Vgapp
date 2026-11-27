@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="VGCares Patient Regression Suite" verbose="2" parallel="none" configfailurepolicy="skip">
+    <test name="Patient Regression Tests - Physical Android" preserve-order="true">
+        <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.LaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.SplashScreenComprehensiveTest" />
+            <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />
+            <class name="com.vgcares.automation.tests.patient.auth.PatientAuthTest" />
+            <class name="com.vgcares.automation.tests.patient.home.PatientDashboardTest" />
+        </classes>
+    </test>
+</suite>

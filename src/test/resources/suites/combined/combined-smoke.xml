@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="VGCares Combined Smoke Suite" verbose="2" parallel="none" configfailurepolicy="skip">
+
+    <!-- Phase 1: Common & Patient Role Smoke (sequential on single physical device) -->
+    <test name="Phase 1 - Common and Patient Smoke" preserve-order="true">
+        <groups>
+            <run>
+                <include name="smoke" />
+            </run>
+        </groups>
+        <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.LaunchTest" />
+            <class name="com.vgcares.automation.tests.patient.auth.PatientAuthTest" />
+            <class name="com.vgcares.automation.tests.patient.home.PatientDashboardTest" />
+        </classes>
+    </test>
+
+    <!-- Phase 2: Doctor Role Smoke (clean session transition after Patient logout) -->
+    <test name="Phase 2 - Doctor Smoke" preserve-order="true">
+        <groups>
+            <run>
+                <include name="smoke" />
+            </run>
+        </groups>
+        <classes>
+            <class name="com.vgcares.automation.tests.auth.SignUpTest" />
+            <class name="com.vgcares.automation.tests.auth.DoctorLoginTest" />
+            <class name="com.vgcares.automation.tests.auth.DynamicLiveLoginTest" />
+            <class name="com.vgcares.automation.tests.home.HomeTest" />
+            <class name="com.vgcares.automation.tests.notifications.NotificationBellTest" />
+            <class name="com.vgcares.automation.tests.slots.SlotNavigationTest" />
+            <class name="com.vgcares.automation.tests.profile.ProfileNavigationAndHeaderTest" />
+            <class name="com.vgcares.automation.tests.affiliations.HospitalAffiliationsTest" />
+            <class name="com.vgcares.automation.tests.surgery.SurgeryRequestsListTest" />
+            <class name="com.vgcares.automation.tests.consultation.ConsultationFeesTest" />
+            <class name="com.vgcares.automation.tests.reviews.ReviewsSummaryTest" />
+            <class name="com.vgcares.automation.tests.documents.DocumentsUploadAndValidationTest" />
+            <class name="com.vgcares.automation.tests.settings.SettingsPreferencesTest" />
+            <class name="com.vgcares.automation.tests.navigation.NavigationDrawerComprehensiveTest" />
+        </classes>
+    </test>
+
+</suite>

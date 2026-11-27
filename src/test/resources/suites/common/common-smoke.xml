@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="VGCares Common Smoke Suite" verbose="2" parallel="none" configfailurepolicy="skip">
+    <test name="Common Launch &amp; Onboarding Smoke - Physical Android" preserve-order="true">
+        <groups>
+            <run>
+                <include name="smoke" />
+            </run>
+        </groups>
+        <classes>
+            <class name="com.vgcares.automation.tests.app.AppLaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.LaunchTest" />
+            <class name="com.vgcares.automation.tests.launch.SplashScreenComprehensiveTest" />
+            <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />
+            <class name="com.vgcares.automation.tests.auth.BiometricTest" />
+        </classes>
+    </test>
+</suite>

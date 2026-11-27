@@ -1,0 +1,42 @@
+{
+  "role": "DOCTOR",
+  "module": "doctor/login",
+  "testData": {
+    "validFormatPassword": "Valid@1234",
+    "invalidEmails": {
+      "missingAt": "testemail.com",
+      "missingDomain": "test@",
+      "invalidDomain": "test@.com",
+      "genericInvalid": "invalid-email",
+      "plusAliasFormat": "test+test@email.com"
+    },
+    "placeholders": {
+      "email": "name@example.com",
+      "password": "Enter your password"
+    },
+    "toast": {
+      "dismissWaitSeconds": 6,
+      "minHeightPx": 20,
+      "maxHeightPx": 400
+    },
+    "optionalAccounts": {
+      "multiRole": {
+        "email": "",
+        "password": ""
+      },
+      "deactivated": {
+        "email": "",
+        "password": ""
+      },
+      "blocked": {
+        "email": "",
+        "password": ""
+      },
+      "postReset": {
+        "email": "",
+        "newPassword": "",
+        "oldPassword": ""
+      }
+    }
+  }
+}

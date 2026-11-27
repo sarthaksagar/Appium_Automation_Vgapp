@@ -1,0 +1,31 @@
+{
+  "module": "common/biometric",
+  "testData": {
+    "expectedTexts": {
+      "title": "Quick Access",
+      "brandName": "VGCares Global",
+      "brandSubtitle": "Medical Tourism",
+      "tagline": "World-Class Healthcare, Anywhere in the World",
+      "hospitalsStat": "500+ Hospitals",
+      "countriesStat": "50+ Countries",
+      "promptTitle": "Enable Fingerprint after this sign-in?",
+      "promptSubtitle": "You will verify once now to activate secure instant access.",
+      "enableButton": "Enable",
+      "skipButton": "Skip"
+    },
+    "toasts": {
+      "enabledSuccess": "Fingerprint enabled successfully!",
+      "authFailed": "Fingerprint authentication failed. Please try again.",
+      "noFingerprint": "No fingerprint registered. Please register a fingerprint in device settings first.",
+      "cancelled": "Fingerprint setup cancelled.",
+      "loginAuthFailed": "Authentication failed. Please try again.",
+      "hardwareUnavailable": "Fingerprint hardware not available on this device.",
+      "fingerprintChanged": "Fingerprint data has changed. Please use password to login."
+    },
+    "ui": {
+      "minButtonHeightPx": 60,
+      "minIconSizePx": 32,
+      "maxAlignmentDeltaPx": 80
+    }
+  }
+}

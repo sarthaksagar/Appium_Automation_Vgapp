@@ -1,0 +1,40 @@
+{
+  "role": "DOCTOR",
+  "module": "doctor/signup",
+  "testData": {
+    "valid": {
+      "fullName": "John Doe",
+      "emailDomain": "example.com"
+    },
+    "emptyFullName": {
+      "fullName": "",
+      "email": "test@email.com"
+    },
+    "emptyEmail": {
+      "fullName": "John Doe",
+      "email": ""
+    },
+    "emptyPassword": {
+      "fullName": "John Doe",
+      "email": "test@email.com",
+      "password": ""
+    },
+    "emptyConfirmPassword": {
+      "fullName": "John Doe",
+      "email": "test@email.com",
+      "confirmPassword": ""
+    },
+    "invalidEmail": {
+      "fullName": "John Doe",
+      "invalidEmails": ["test", "test@email"]
+    },
+    "passwordMismatch": {
+      "fullName": "John Doe",
+      "email": "test@email.com"
+    },
+    "existingEmail": {
+      "fullName": "John Doe",
+      "email": "already.registered@email.com"
+    }
+  }
+}

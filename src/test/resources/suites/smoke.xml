@@ -21,6 +21,8 @@
             <class name="com.vgcares.automation.tests.launch.LaunchTest" />
             <class name="com.vgcares.automation.tests.auth.SignUpTest" />
             <class name="com.vgcares.automation.tests.auth.LoginTest" />
+            <class name="com.vgcares.automation.tests.patient.auth.PatientAuthTest" />
+            <class name="com.vgcares.automation.tests.patient.home.PatientDashboardTest" />
             <class name="com.vgcares.automation.tests.auth.DoctorLoginTest" />
             <class name="com.vgcares.automation.tests.auth.DynamicLiveLoginTest" />
             <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />

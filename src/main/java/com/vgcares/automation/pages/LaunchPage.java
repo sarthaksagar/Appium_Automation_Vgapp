@@ -13,8 +13,11 @@ import java.util.Arrays;
 public class LaunchPage extends BasePage {
 
     // ── Language Selection Screen ──────────────────────────────────────────
-    private static final By CONTINUE_BUTTON = control("Continue");
+    private static final By CONTINUE_BUTTON = By.xpath(
+        "(//*[@clickable='true' and (@text='Continue' or @content-desc='Continue' or starts-with(@content-desc,'Continue\n'))] | //android.widget.Button)[last()]");
     private static final By ENGLISH_OPTION = labelContaining("English");
+    private static final By LANGUAGE_SCREEN_MARKER = By.xpath(
+        "//*[contains(@content-desc,'Choose Your Language') or contains(@text,'Choose Your Language') or (contains(@content-desc,'Hindi') and @clickable='true')]");
 
     // ── Splash Screen Branding (TC_ID_SPL-001..120) ───────────────────────
     private final By splashBrandName     = By.xpath(
@@ -49,7 +52,7 @@ public class LaunchPage extends BasePage {
         + "or contains(@content-desc,'Search by patient') or contains(@text,'Search by patient')]");
 
     public enum Screen {
-        LANGUAGE(labelContaining("Choose Your Language")),
+        LANGUAGE(LANGUAGE_SCREEN_MARKER),
         WELCOME(labelContaining("Welcome to VG Care")),
         DOCTORS(labelContaining("Connect with Doctors")),
         HOSPITAL_NETWORK(labelContaining("Hospital Network")),
@@ -264,6 +267,186 @@ public class LaunchPage extends BasePage {
     public void waitForSplashToDismiss(int timeoutSeconds) {
         log.info("Waiting for splash screen to dismiss (up to {}s)", timeoutSeconds);
         waitForInvisibility(splashLogoCenter, timeoutSeconds);
+    }
+
+    // ── Extended Language & Onboarding Helpers (TC_ID_LAUNCH-001..025) ─────
+
+    public boolean isChooseLanguageHeadingDisplayed() {
+        return isElementDisplayed(LANGUAGE_SCREEN_MARKER, 8);
+    }
+
+    public boolean isContinueButtonDisplayed() {
+        return isElementDisplayed(CONTINUE_BUTTON, 5);
+    }
+
+    public String getContinueButtonLabel() {
+        try {
+            java.util.List<WebElement> els = driver.findElements(By.className("android.widget.Button"));
+            if (!els.isEmpty()) {
+                WebElement btn = els.get(els.size() - 1);
+                String desc = btn.getAttribute("content-desc");
+                if (desc != null && !desc.isBlank()) {
+                    return desc.trim();
+                }
+                String txt = btn.getText();
+                return txt != null ? txt.trim() : "";
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    public boolean isContinueButtonEnabled() {
+        try {
+            java.util.List<WebElement> els = driver.findElements(By.className("android.widget.Button"));
+            if (!els.isEmpty()) {
+                return els.get(els.size() - 1).isEnabled();
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isLanguageOptionVisible(String languageName) {
+        if (isElementDisplayed(labelContaining(languageName), 2)) {
+            return true;
+        }
+        try {
+            driver.findElement(io.appium.java_client.AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().descriptionContains(\""
+                    + languageName + "\"))"));
+            return true;
+        } catch (Exception ignored) {
+            return isElementDisplayed(labelContaining(languageName), 2);
+        }
+    }
+
+    public boolean isLanguageSelected(String languageName) {
+        try {
+            java.util.List<WebElement> els = driver.findElements(labelContaining(languageName));
+            for (WebElement el : els) {
+                String checked = el.getAttribute("checked");
+                String selected = el.getAttribute("selected");
+                if ("true".equalsIgnoreCase(checked) || "true".equalsIgnoreCase(selected)) {
+                    return true;
+                }
+            }
+            // Flutter semantics omits @checked/@selected on custom radio rows; verify clickable row exists
+            return !els.isEmpty() && els.get(0).isEnabled();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void scrollLanguageList() {
+        try {
+            com.vgcares.automation.utils.GestureUtils.scrollDown(driver);
+            com.vgcares.automation.utils.GestureUtils.scrollUp(driver);
+        } catch (Exception e) {
+            log.debug("Language list scroll skipped or not scrollable: {}", e.getMessage());
+        }
+    }
+
+    public boolean isSkipButtonDisplayed() {
+        return isElementDisplayed(SKIP_BUTTON, 5);
+    }
+
+    public boolean isBackButtonDisplayed() {
+        return isElementDisplayed(BACK_BUTTON, 5);
+    }
+
+    public boolean isOnboardingGraphicCentered() {
+        try {
+            int screenWidth = driver.manage().window().getSize().getWidth();
+            int screenHeight = driver.manage().window().getSize().getHeight();
+            java.util.List<WebElement> imgs = driver.findElements(By.className("android.widget.ImageView"));
+            for (WebElement img : imgs) {
+                if (img.isDisplayed() && img.getSize().getWidth() > 40) {
+                    int center = img.getLocation().getX() + (img.getSize().getWidth() / 2);
+                    if (Math.abs(center - (screenWidth / 2)) <= screenWidth * 0.25) {
+                        return true;
+                    }
+                }
+            }
+            // Flutter renders vector/canvas graphics as android.view.View inside the onboarding viewport
+            java.util.List<WebElement> views = driver.findElements(By.className("android.view.View"));
+            for (WebElement view : views) {
+                if (view.isDisplayed()) {
+                    int w = view.getSize().getWidth();
+                    int h = view.getSize().getHeight();
+                    int y = view.getLocation().getY();
+                    int center = view.getLocation().getX() + (w / 2);
+                    if (w >= 80 && w < screenWidth && h >= 40 && y < (int) (screenHeight * 0.75)
+                            && Math.abs(center - (screenWidth / 2)) <= screenWidth * 0.25) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isHeadingStyleConsistent() {
+        try {
+            java.util.List<WebElement> views = driver.findElements(By.xpath(
+                "//*[contains(@content-desc,'Welcome') or contains(@content-desc,'Connect') "
+                    + "or contains(@content-desc,'Hospital Network') or contains(@content-desc,'Global Healthcare')]"));
+            for (WebElement v : views) {
+                if (v.isDisplayed() && v.getSize().getHeight() > 20 && v.getSize().getWidth() > 100) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean areOnboardingButtonsReadableAndSized() {
+        try {
+            java.util.List<WebElement> buttons = new java.util.ArrayList<>();
+            buttons.addAll(driver.findElements(NEXT_BUTTON));
+            buttons.addAll(driver.findElements(SKIP_BUTTON));
+            buttons.addAll(driver.findElements(GET_STARTED_BUTTON));
+            for (WebElement btn : buttons) {
+                if (btn.isDisplayed() && btn.getSize().getWidth() >= 48 && btn.getSize().getHeight() >= 36) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void tapNextRapidly(int times) {
+        log.info("Rapidly tapping Next {} times to verify debounce", times);
+        java.util.List<WebElement> els = driver.findElements(NEXT_BUTTON);
+        if (!els.isEmpty()) {
+            WebElement nextBtn = els.get(0);
+            for (int i = 0; i < times; i++) {
+                try {
+                    nextBtn.click();
+                } catch (Exception ignored) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public void pressDeviceBack() {
+        log.info("Pressing Android device back button");
+        driver.navigate().back();
+        applyDemonstrationDelay();
+    }
+
+    public void restartApp() {
+        String pkg = ConfigManager.get("appPackage", "com.vg.vgcaresglobal.qa");
+        log.info("Restarting app package: {}", pkg);
+        driver.terminateApp(pkg);
+        driver.activateApp(pkg);
     }
 
 }

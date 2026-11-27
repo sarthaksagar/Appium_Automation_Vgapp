@@ -6,7 +6,7 @@
   ║  VGCares Global – Master Regression Test Suite                      ║
   ║  Device  : Redmi Note 10S (UDID: GIPV9HBMLBHITO5H) Android 13      ║
   ║  Run cmd : mvn clean test                                            ║
-  ║  Report  : reports/ExtentReport_*.html                              ║
+  ║  Report  : target/reports/                                           ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  Test Classes (in execution order):                                  ║
   ║   1. AppLaunchTest       – App install & launch verification         ║
@@ -27,6 +27,8 @@
             <class name="com.vgcares.automation.tests.launch.LaunchTest" />
             <class name="com.vgcares.automation.tests.auth.SignUpTest" />
             <class name="com.vgcares.automation.tests.auth.LoginTest" />
+            <class name="com.vgcares.automation.tests.patient.auth.PatientAuthTest" />
+            <class name="com.vgcares.automation.tests.patient.home.PatientDashboardTest" />
             <class name="com.vgcares.automation.tests.auth.DoctorLoginTest" />
             <class name="com.vgcares.automation.tests.auth.DynamicLiveLoginTest" />
             <class name="com.vgcares.automation.tests.auth.ForgotPasswordTest" />
@@ -59,6 +61,7 @@
             <class name="com.vgcares.automation.tests.navigation.NavigationDrawerComprehensiveTest" />
             <class name="com.vgcares.automation.tests.launch.SplashScreenComprehensiveTest" />
             <class name="com.vgcares.automation.tests.affiliations.HospitalAffiliationsExtendedFlowTest" />
+            <class name="com.vgcares.automation.tests.e2e.crossrole.CrossRoleSessionTransitionTest" />
         </classes>
     </test>
 

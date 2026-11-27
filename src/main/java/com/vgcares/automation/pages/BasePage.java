@@ -38,7 +38,6 @@ public abstract class BasePage {
 
     protected void click(By locator) {
         log.debug("Clicking element located by: {}", locator);
-        acceptPermissionIfPresent();
         try {
             waitForClickable(locator).click();
         } catch (ElementClickInterceptedException | TimeoutException e) {
@@ -75,13 +74,7 @@ public abstract class BasePage {
      * Allows beginners to observe screen transitions and UI interactions clearly on the physical device.
      */
     protected void applyDemonstrationDelay() {
-        if (com.vgcares.automation.constants.FrameworkConstants.IS_LEARNING_MODE) {
-            try {
-                Thread.sleep(com.vgcares.automation.constants.FrameworkConstants.ACTION_DELAY_MILLIS);
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        com.vgcares.automation.utils.ExecutionUtils.applyActionDelayIfLearning();
     }
 
     protected String getText(By locator) {
@@ -113,9 +106,21 @@ public abstract class BasePage {
         return driver.findElements(locator);
     }
 
+    protected boolean isElementDisplayedNow(By locator) {
+        try {
+            return driver.findElements(locator).stream().anyMatch(WebElement::isDisplayed);
+        } catch (StaleElementReferenceException e) {
+            return false;
+        }
+    }
+
     public void hideKeyboard() {
-        if (driver.isKeyboardShown()) {
-            driver.hideKeyboard();
+        try {
+            if (driver.isKeyboardShown()) {
+                driver.hideKeyboard();
+            }
+        } catch (Exception ignored) {
+            // Keyboard already dismissed or unavailable on current focus
         }
     }
 

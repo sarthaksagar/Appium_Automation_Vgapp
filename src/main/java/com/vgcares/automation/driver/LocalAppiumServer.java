@@ -33,9 +33,14 @@ final class LocalAppiumServer {
         AppiumDriverLocalService service = null;
         try {
             var environment = new HashMap<>(System.getenv());
+            Path userAppiumHome = Path.of(System.getProperty("user.home", ""), ".appium");
             Path projectAppiumHome = Path.of("temp", "appium-2-home").toAbsolutePath();
-            if (Files.isDirectory(projectAppiumHome) && environment.getOrDefault("APPIUM_HOME", "").isBlank()) {
-                environment.put("APPIUM_HOME", projectAppiumHome.toString());
+            if (environment.getOrDefault("APPIUM_HOME", "").isBlank()) {
+                if (Files.isDirectory(userAppiumHome)) {
+                    environment.put("APPIUM_HOME", userAppiumHome.toString());
+                } else if (Files.isDirectory(projectAppiumHome)) {
+                    environment.put("APPIUM_HOME", projectAppiumHome.toString());
+                }
             }
 
             var builder = new AppiumServiceBuilder()
@@ -45,7 +50,7 @@ final class LocalAppiumServer {
                     .withArgument(GeneralServerFlag.LOG_LEVEL, "warn")
                     .withArgument(GeneralServerFlag.LOG_NO_COLORS)
                     .withEnvironment(environment)
-                    .withTimeout(Duration.ofSeconds(30));
+                    .withTimeout(Duration.ofSeconds(60));
             if (environment.getOrDefault("APPIUM_PATH", "").isBlank() && environment.containsKey("APPDATA")) {
                 Path appiumScript = Path.of(environment.get("APPDATA"), "npm", "node_modules", "appium", "index.js");
                 if (Files.isRegularFile(appiumScript)) {

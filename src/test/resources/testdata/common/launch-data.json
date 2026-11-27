@@ -1,0 +1,32 @@
+{
+  "module": "common/launch",
+  "roles": ["PATIENT", "DOCTOR"],
+  "testData": {
+    "defaultLanguage": "English",
+    "testLanguages": ["English", "Hindi", "French"],
+    "persistenceLanguage": "Spanish",
+    "allLanguages": [
+      "English",
+      "Hindi",
+      "French",
+      "Russian",
+      "Spanish",
+      "Portuguese",
+      "German",
+      "Swedish",
+      "Vietnamese",
+      "Uzbek"
+    ],
+    "nativeScripts": {
+      "Hindi": "हिन्दी",
+      "French": "Français",
+      "Russian": "Русский"
+    },
+    "onboardingHeadings": {
+      "welcome": "Welcome to VG Care",
+      "doctors": "Connect with Doctors",
+      "hospitalNetwork": "Hospital Network",
+      "globalHealthcare": "Global Healthcare"
+    }
+  }
+}

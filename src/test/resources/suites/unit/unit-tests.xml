@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="VGCares Framework Unit Tests" verbose="2" parallel="none">
+    <test name="Offline Framework Unit Verification" preserve-order="true">
+        <classes>
+            <class name="com.vgcares.automation.unit.ConfigManagerUnitTest" />
+            <class name="com.vgcares.automation.unit.FrameworkArchitectureUnitTest" />
+            <class name="com.vgcares.automation.driver.DriverInfrastructureUnitTest" />
+            <class name="com.vgcares.automation.testdata.AuthFixturesUnitTest" />
+            <class name="com.vgcares.automation.utils.DeviceUtilsUnitTest" />
+            <class name="com.vgcares.automation.utils.JsonUtilsUnitTest" />
+        </classes>
+    </test>
+</suite>

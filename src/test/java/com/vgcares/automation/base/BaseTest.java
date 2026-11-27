@@ -3,15 +3,16 @@ package com.vgcares.automation.base;
 import com.vgcares.automation.driver.DriverManager;
 import com.vgcares.automation.driver.MobileInfrastructureException;
 import com.vgcares.automation.listeners.TestListener;
-import com.vgcares.automation.config.ConfigManager;
 import com.vgcares.automation.pages.HomePage;
-import com.vgcares.automation.pages.LaunchPage;
 import com.vgcares.automation.pages.LoginPage;
+import com.vgcares.automation.pages.patient.PatientHomePage;
 import com.vgcares.automation.testdata.QaCredentials;
+import com.vgcares.automation.workflows.common.OnboardingWorkflow;
+import com.vgcares.automation.workflows.doctor.DoctorAuthWorkflow;
+import com.vgcares.automation.workflows.patient.PatientAuthWorkflow;
 import io.appium.java_client.android.AndroidDriver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.TimeoutException;
 import org.testng.Assert;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterSuite;
@@ -42,7 +43,10 @@ public abstract class BaseTest {
     }
 
     @BeforeClass(alwaysRun = true)
-    public final void setUp() {
+    public final void setUp(ITestContext context) {
+        if (context != null && context.getSuite().getAttribute(SUITE_SETUP_FAILURE) != null) {
+            return;
+        }
         if (!DriverManager.hasActiveSession()) {
             DriverManager.startSession();
         }
@@ -60,42 +64,33 @@ public abstract class BaseTest {
     }
 
     protected final void prepareAuthScreen() {
-        AndroidDriver current = getDriver();
-        LaunchPage launch = new LaunchPage(current);
-        LaunchPage.Screen screen;
-        try {
-            screen = launch.waitForAuthEntryScreen();
-        } catch (TimeoutException initialTimeout) {
-            log.warn("VG Cares did not reach a recognized launch screen. Reopening the app once.");
-            try {
-                String appPackage = ConfigManager.get("appPackage", "");
-                current.terminateApp(appPackage);
-                current.activateApp(appPackage);
-                screen = launch.waitForAuthEntryScreen();
-            } catch (RuntimeException recoveryFailure) {
-                recoveryFailure.addSuppressed(initialTimeout);
-                throw recoveryFailure;
-            }
-        }
-        log.info("Preparing authentication from the {} screen", screen);
-        if (screen == LaunchPage.Screen.HOME) {
-            new HomePage(current).logout();
-            launch.waitForAuthTabs();
-        } else {
-            launch.passOnboardingIfPresent(screen);
-        }
+        OnboardingWorkflow.ensureAuthScreenReady(getDriver());
     }
 
     protected final HomePage loginAsQaDoctor(LoginPage loginPage) {
         QaCredentials account = QaCredentials.doctor();
-        return loginPage.loginWithDynamicAccount(account.email(), account.password());
+        return DoctorAuthWorkflow.loginAsDoctor(getDriver(), account.email(), account.password());
     }
 
     protected final HomePage loginAsQaDoctor() {
         QaCredentials account = QaCredentials.doctor();
-        HomePage homePage = openFreshLogin().loginWithDynamicAccount(account.email(), account.password());
-        Assert.assertTrue(homePage.isHomeScreenLoaded(), "The authorized QA account must reach the doctor dashboard.");
+        HomePage homePage = DoctorAuthWorkflow.ensureAuthenticatedDoctor(getDriver(), account.email(), account.password());
+        Assert.assertTrue(homePage.isHomeScreenLoaded(), "The authorized QA doctor account must reach the doctor dashboard.");
         return homePage;
+    }
+
+    protected final PatientHomePage loginAsQaPatient(LoginPage loginPage) {
+        QaCredentials account = QaCredentials.patient();
+        return PatientAuthWorkflow.loginAsPatient(getDriver(), account.email(), account.password());
+    }
+
+    protected final PatientHomePage loginAsQaPatient() {
+        QaCredentials account = QaCredentials.patient();
+        PatientHomePage patientHome = PatientAuthWorkflow.ensureAuthenticatedPatient(
+                getDriver(), account.email(), account.password());
+        Assert.assertTrue(patientHome.isPatientDashboardLoaded(),
+                "The authorized QA patient account must reach the patient dashboard.");
+        return patientHome;
     }
 
     protected final AndroidDriver getDriver() {

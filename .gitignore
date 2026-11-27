@@ -2,6 +2,10 @@
 target/
 *.class
 
+# Secrets & local environment overrides
+.env
+.env.local
+
 # Logs & Execution Artifacts
 /logs/
 /reports/
